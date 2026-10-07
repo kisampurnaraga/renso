@@ -44,6 +44,21 @@ Pilihan awal adalah Neon Free, dengan batas penyimpanan dan compute sesuai paket
 
 Jangan memasukkan `.env`, connection string, atau API key ke GitHub. Jangan menaruh secret pada variabel dengan prefiks `VITE_`. Migrasi menggunakan query parameterized dan tidak menyimpan isi percakapan. Pengujian database Neon langsung belum dilakukan tanpa kredensial.
 
+## Preview frontend di Vercel
+
+Import repository ini sebagai project Vite, build `npm run build`, output `dist`, install `npm ci`, Node.js 24. Tambahkan environment variable publik `VITE_RENSO_MODE=demo` untuk Preview. Konfigurasi platform tersedia di `vercel.json`.
+
+Mode ini menjalankan respons demo di browser dan tidak membutuhkan backend/database. Avatar, aura, timer, chat skenario dan audio perangkat dapat diuji. Label preview selalu terlihat; mikrofon/transkripsi dan AI langsung belum aktif. Untuk kembali ke backend, gunakan `VITE_RENSO_MODE=api` dan sediakan routing `/api` ke backend yang sudah dikonfigurasi, kemudian rebuild.
+
+Pengujian lokal mode frontend-only:
+
+```bash
+VITE_RENSO_MODE=demo npm run build
+npm run dev -- --mode development
+```
+
+Untuk development frontend-only, set `VITE_RENSO_MODE=demo` pada `.env` lokal juga. File `.env` tidak boleh masuk GitHub. Preview Vercel mungkin membutuhkan login pemilik sesuai pengaturan perlindungan deployment.
+
 ## Agent dan audio
 
 Konfigurasi agent dan batas perilakunya berada di `server/agents.mjs`. Server membentuk instruksi sistem sendiri; client tidak boleh mengirim role `system`. History maksimum enam pesan. Pesan baru maksimum 2.000 karakter.
