@@ -1,0 +1,72 @@
+# Renso — Resonansi Soul
+
+Teman AI dengan karakter balok 3D, aura interaktif, audio, dan langkah kecil untuk keseharian. Desain karakter orisinal; tidak menggunakan aset LEGO atau Roblox.
+
+Repository: https://github.com/kisampurnaraga/renso
+
+## Status v0.1
+
+Fondasi MVP yang dapat dijalankan lokal. **Belum merupakan layanan produksi berbayar.**
+
+Berfungsi: Teduh dan Spark, avatar 3D dengan fallback ringan, tiga warna aura pilihan pengguna, percakapan tamu, timer aktivitas 1–2 menit, pembacaan respons menggunakan suara perangkat, penghapusan sesi, kuota API, manifest PWA dan halaman offline.
+
+Tanpa kredensial, UI menampilkan **mode demo** dengan respons skenario. Database lokal sementara berada di memori dan hilang ketika server berhenti. Dengan `DATABASE_URL`, aplikasi menggunakan PostgreSQL. Dengan `OPENAI_API_KEY` dan `OPENAI_MODEL`, chat menggunakan penyedia AI dan input suara memakai transkripsi. Percakapan AI memerlukan internet. Suara Indonesia bergantung pada layanan suara perangkat; suara unik tiap karakter belum tersedia. Kamera dinonaktifkan pada versi ini.
+
+## Jalankan
+
+Node.js 22.12+ atau 24 disarankan.
+
+```bash
+npm ci
+cp .env.example .env
+npm run server
+# Terminal lain:
+npm run dev
+```
+
+Buka `http://localhost:5173`. Vite meneruskan `/api` ke backend port 3001.
+
+```bash
+npm test
+npm run build
+```
+
+Untuk menyajikan hasil build, jalankan backend dengan `APP_ORIGIN=http://localhost:3001` pada pengujian lokal, lalu buka port 3001. Mode produksi mewajibkan origin HTTPS dan database persisten.
+
+## Database gratis: Neon PostgreSQL
+
+Pilihan awal adalah Neon Free, dengan batas penyimpanan dan compute sesuai paket aktif. Paket gratis bukan jaminan seluruh biaya aplikasi gratis; pemakaian AI, hosting, dan suara terpisah. Referensi: https://neon.com/pricing dan https://neon.com/blog/neon-free-plan-1-gb-per-project (2 Oktober 2026).
+
+1. Buat project Neon Free melalui akun pemilik.
+2. Salin connection string yang disediakan Neon (termasuk parameter TLS) ke `DATABASE_URL` di `.env` atau secret manager hosting.
+3. Jalankan `npm run db:migrate`.
+4. Jalankan server; `/api/status` harus menampilkan `database: postgresql`.
+
+Jangan memasukkan `.env`, connection string, atau API key ke GitHub. Jangan menaruh secret pada variabel dengan prefiks `VITE_`. Migrasi menggunakan query parameterized dan tidak menyimpan isi percakapan. Pengujian database Neon langsung belum dilakukan tanpa kredensial.
+
+## Agent dan audio
+
+Konfigurasi agent dan batas perilakunya berada di `server/agents.mjs`. Server membentuk instruksi sistem sendiri; client tidak boleh mengirim role `system`. History maksimum enam pesan. Pesan baru maksimum 2.000 karakter.
+
+Chat AI: transkrip/teks → backend → model → teks → speech synthesis perangkat. Input suara: izin eksplisit → rekaman maksimal 30 detik → backend → transkripsi → pengguna memeriksa teks → kirim chat. Rekaman tidak disimpan oleh aplikasi. Pemrosesan dan retensi penyedia AI/layanan suara perangkat harus dinilai sebelum peluncuran.
+
+Warna aura adalah representasi suasana yang dipilih pengguna. Tidak ada diagnosis, pembacaan aura ilmiah, inferensi kepribadian dari wajah, atau identifikasi biometrik.
+
+## Batas sebelum publikasi komersial
+
+- Sesi tamu saat ini bukan akun pengguna permanen; kuota per sesi tidak mencegah semua penyalahgunaan oleh orang yang membuat sesi baru. Tambahkan verifikasi akun, batas global biaya, dan proteksi bot sebelum membuka AI berbayar ke publik.
+- Rate limit lokal perlu penyimpanan bersama ketika memakai beberapa instance.
+- Belum ada subscription, pembayaran, push notification, dashboard admin, APK Android, voice realtime, kamera, Kiko atau Sapa.
+- Penghapusan sesi menghapus data aplikasi; tidak menjamin penghapusan data yang telah diproses penyedia eksternal.
+- Uji evaluasi agent, kebijakan privasi, penanganan percakapan berisiko, dan dukungan pengguna sebelum produksi.
+- Uji Android nyata untuk mikrofon, suara Indonesia, WebGL, dan instalasi PWA. Ikon PNG 192/512 tersedia; pemasangan tetap perlu diuji di perangkat nyata.
+
+## Struktur
+
+```text
+src/             React UI, avatar dan audio perangkat
+server/          Fastify, agent, provider adapter, sesi dan kuota
+db/              Migrasi PostgreSQL
+public/          Manifest, favicon, offline page dan service worker
+docs/            Arsitektur dan roadmap
+```
