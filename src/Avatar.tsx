@@ -78,7 +78,7 @@ function RoomAssets({ activity }: { activity: Props['workActivity'] }) {
       <Block position={[-0.09,-0.05,0.082]} size={[0.40,0.16,0.013]} color="#f497b9"/>
       <Block position={[0,-0.38,0.07]} size={[0.91,0.075,0.16]} color="#be8e65"/>
     </group>
-    <group position={[-0.61,0.20,0.90]} rotation={[0,0.12,0]} name="drawing-tablet">
+    <group position={[0.75,0.20,0.51]} rotation={[0,0.12,0]} name="drawing-tablet">
       <Block position={[0,0,0]} size={[0.63,0.05,0.34]} color="#69728d"/>
       <Block position={[0,0.029,0]} size={[0.51,0.008,0.24]} color="#b9d9e9"/>
       <Block position={[0.12,0.04,0.02]} size={[0.20,0.009,0.12]} color="#f2a8bc"/>
@@ -93,11 +93,11 @@ function RoomAssets({ activity }: { activity: Props['workActivity'] }) {
       <Block position={[0,0.10,0.35]} size={[0.39,0.75,0.025]} color="#1e293c"/>
       {[-0.09,0.28].map(y => <mesh key={y} position={[0,y,0.368]}><ringGeometry args={[0.09,0.125,20]}/><meshBasicMaterial color="#7de8c1"/></mesh>)}
     </group>
-    <group position={[1.09,0.76,0.24]} rotation={[0,-0.38,0]} scale={0.69} name="second-terminal-monitor">
+    <group position={[0.79,0.76,0.86]} rotation={[0,Math.PI+0.65,0]} scale={0.69} name="second-terminal-monitor">
       <Block position={[0,-0.42,0]} size={[0.09,0.36,0.06]} color="#4b657a"/>
       <WorkScreen activity="coding"/>
     </group>
-    <mesh position={[0.97,0.22,1.00]} scale={[1,0.6,1.4]}><sphereGeometry args={[0.085,12,8]}/><meshStandardMaterial color="#4c5a78"/></mesh>
+    <mesh position={[0.35,0.22,0.49]} scale={[1,0.6,1.4]}><sphereGeometry args={[0.085,12,8]}/><meshStandardMaterial color="#4c5a78"/></mesh>
     <Block position={[-1.10,1.16,-1.30]} size={[0.63,0.83,0.07]} color="#7cabb4"/>
     {[0,1,2].map(i => <Block key={i} position={[-1.10,0.92+i*0.22,-1.25]} size={[0.49,0.09,0.04]} color="#d3f8e9"/>)}
   </group>;
@@ -111,13 +111,13 @@ function RoomAssets({ activity }: { activity: Props['workActivity'] }) {
     <Block position={[-0.95,1.20,-1.33]} size={[0.95,0.66,0.04]} color="#a88164"/>
     <Block position={[-0.95,1.20,-1.30]} size={[0.81,0.52,0.02]} color="#fff2d7"/>
     {[0,1,2].map(i => <Block key={i} position={[-0.95,1.36-i*0.14,-1.28]} size={[0.51-(i%2)*0.13,0.025,0.01]} color="#bc9c80"/>)}
-    <group position={[-0.64,0.20,0.87]} name="manuscript-and-notebook">
+    <group position={[0.76,0.20,0.53]} name="manuscript-and-notebook">
       <Block position={[0,0,0]} size={[0.66,0.055,0.39]} color="#b9b39d"/>
       <Block position={[0,0.034,0]} size={[0.61,0.016,0.36]} color="#fff7e3"/>
       {[0,1,2].map(i => <Block key={i} position={[0,0.045,-0.10+i*0.08]} size={[0.41,0.003,0.012]} color="#b7a78e"/>)}
       <Block position={[0.35,0.045,0]} size={[0.023,0.025,0.34]} color="#e39a57"/>
     </group>
-    <Block position={[0.97,0.23,0.96]} size={[0.37,0.12,0.29]} color="#fff9ef"/>
+    <Block position={[0.92,0.23,0.94]} size={[0.37,0.12,0.29]} color="#fff9ef"/>
   </group>;
   if(activity === 'study') return <group name="studio-study-assets">
     <Block position={[0.15,1.18,-1.33]} size={[2.87,1.09,0.06]} color="#b88b58"/>
@@ -132,7 +132,7 @@ function RoomAssets({ activity }: { activity: Props['workActivity'] }) {
     </group>
     <Block position={[0.95,-0.17,-0.63]} size={[1.10,0.12,0.77]} color="#d5a76f"/>
     {['#83a5c5','#e7b864','#a291cd'].map((c,i) => <Block key={c} position={[0.98,-0.04+i*0.16,-0.57]} size={[0.77-i*0.07,0.14,0.49]} color={c}/>)}
-    <group position={[-0.66,0.22,0.87]} name="open-study-book">
+    <group position={[0.76,0.22,0.51]} name="open-study-book">
       <group rotation={[0,0,-0.07]}><Block position={[-0.16,0,0]} size={[0.31,0.055,0.40]} color="#fff8dd"/></group>
       <group rotation={[0,0,0.07]}><Block position={[0.16,0,0]} size={[0.31,0.055,0.40]} color="#fff8dd"/></group>
       {[-0.16,0.16].map(x => [0,1,2].map(i => <Block key={x+':'+i} position={[x,0.041,-0.12+i*0.10]} size={[0.20,0.004,0.014]} color="#8b9e8d"/>))}
@@ -206,20 +206,23 @@ function WorkRoom(props: Props) {
     <Block position={[0.17,0.37,-0.17]} size={[0.24,0.44,0.26]} color={outfit}/>
     <group ref={leftHand}><Block position={[-0.78,0.23,0.27]} size={[0.22,0.16,0.52]} color={outfit}/><Block position={[-0.78,0.24,0.58]} size={[0.22,0.13,0.20]} color="#ead1b6"/></group>
     <group ref={rightHand}><Block position={[0.04,0.23,0.27]} size={[0.22,0.16,0.52]} color={outfit}/><Block position={[0.04,0.24,0.58]} size={[0.22,0.13,0.20]} color="#ead1b6"/></group>
-    <group position={[0.48,0.27,0.73]} rotation={[0,-0.22,0]}>
+    {/* The character faces +Z. Rotating the workstation by PI makes its
+        screen's local +Z display face world -Z, toward the seated character.
+        The keyboard sits nearer the character than the screen hinge. */}
+    <group position={[-0.35,0.27,0.62]} rotation={[0,Math.PI,0]} name="avatar-facing-workstation">
       <Block position={[0,-0.07,0]} size={[1.1,0.045,0.47]} color="#737c9f"/>
       <Block position={[0,-0.042,0.07]} size={[0.79,0.008,0.19]} color="#c4d0e6"/>
       {props.workstation === 'desktop' ? <>
-        <Block position={[0,0.10,-0.16]} size={[0.08,0.29,0.07]} color="#737c9f"/>
-        <group position={[0,0.49,-0.17]}><WorkScreen activity={props.workActivity}/></group>
-      </> : <group position={[0,0.28,-0.17]} rotation={[-0.12,0,0]}><WorkScreen activity={props.workActivity}/></group>}
+        <Block position={[0,0.10,-0.24]} size={[0.08,0.29,0.07]} color="#737c9f"/>
+        <group position={[0,0.49,-0.24]}><WorkScreen activity={props.workActivity}/></group>
+      </> : <group position={[0,0.28,-0.24]} rotation={[-0.12,0,0]}><WorkScreen activity={props.workActivity}/></group>}
     </group>
     <mesh position={[-1.09,0.30,0.75]}><cylinderGeometry args={[0.09,0.075,0.24,12]}/><meshStandardMaterial color="#9dcfc8"/></mesh>
   </group>;
 }
 export default function Avatar(props: Props) {
   const working = Boolean(props.workActivity);
-  return <Canvas camera={{position:working ? [4,2.8,6] : [3,2,5],fov:working ? 39 : 38}} dpr={[1,1.5]} gl={{antialias:true,alpha:true}} aria-label={working ? `Avatar ${props.agent} menemani aktivitas ${props.workActivity} di ruang kerja dengan ${props.workstation === 'desktop' ? 'komputer' : 'laptop'}` : `Avatar ${props.agent} dengan aura pilihanmu`}>
+  return <Canvas camera={{position:working ? [5,3,-0.8] : [3,2,5],fov:working ? 39 : 38}} dpr={[1,1.5]} gl={{antialias:true,alpha:true}} aria-label={working ? `Avatar ${props.agent} menemani aktivitas ${props.workActivity} di ruang kerja dengan ${props.workstation === 'desktop' ? 'komputer' : 'laptop'}` : `Avatar ${props.agent} dengan aura pilihanmu`}>
     <ambientLight intensity={1.5}/><directionalLight position={[3,5,4]} intensity={2}/><pointLight position={[-3,1,2]} color={props.color} intensity={8}/>
     {working ? <WorkRoom {...props}/> : <group position={[0,-0.25,0]}><Character {...props}/></group>}
   </Canvas>;

@@ -1,0 +1,23 @@
+name: Ide atau optimasi
+description: Usulkan fitur, eksperimen, aset, atau peningkatan Renso.
+title: "[Ide] "
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Kebutuhan pengguna
+      description: Situasi apa yang ingin dibantu?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Pengalaman yang diusulkan
+      description: Ceritakan perilaku aplikasi yang diinginkan dan manfaatnya.
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: Pendekatan atau contoh
+      description: Opsional; boleh menyertakan rancangan, eksperimen, biaya, atau alternatif.

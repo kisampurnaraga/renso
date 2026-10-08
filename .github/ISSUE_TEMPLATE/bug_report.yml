@@ -1,0 +1,31 @@
+name: Laporan bug
+description: Laporkan perilaku Renso yang tidak sesuai harapan.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "Jangan sertakan API key, data pribadi, rekaman, atau foto wajah. Untuk kerentanan gunakan kanal privat bila tersedia."
+  - type: textarea
+    id: problem
+    attributes:
+      label: Apa yang terjadi?
+      description: Jelaskan hasil yang terlihat dan hasil yang diharapkan.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Cara mengulang masalah
+      placeholder: "1. Buka Renso\n2. Pilih aktivitas...\n3. ..."
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Perangkat, browser, dan versi preview
+      placeholder: "Android, Chrome, URL preview atau commit"
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Bukti tambahan
+      description: Screenshot atau pesan error yang sudah dibersihkan dari informasi sensitif.

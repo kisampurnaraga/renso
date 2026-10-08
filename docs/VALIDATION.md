@@ -35,3 +35,9 @@ Build and 13 tests pass. Local Chromium verifies bright-mode prompt, description
 ## Distinct room assets (2026-10-08)
 
 Replaced the shared decor with activity-specific asset groups and palettes. All four mobile scene screenshots inspected: design easel/tablet/pinboard, coding second terminal/tower, writing tall bookcase/manuscript stack, study chalkboard/open book/book stack. Work-flow browser QA passes with no page errors or horizontal overflow. Generic activities remain explicitly generic. Scene selection uses local keyword mapping, not image/video generation.
+
+## Natural workstation and community foundation (2026-10-08)
+
+Laptop and desktop displays now face the seated avatar; the work camera views the desk from the side. The coding secondary monitor also faces the avatar. Build and 13 tests pass. Local Chromium work-flow QA passes with no page errors; updated mobile laptop and desktop design screenshots visually inspected. Physical Android testing remains pending.
+
+Added MIT license, contribution/community guides, code of conduct, issue forms, and PR template. Community welcome issue #1 exists. Repository visibility was verified as private; these files do not change access or establish an always-running AI team.

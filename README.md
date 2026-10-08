@@ -10,7 +10,7 @@ Fondasi MVP yang dapat dijalankan lokal. **Belum merupakan layanan produksi berb
 
 Berfungsi: Teduh dan Spark, avatar 3D dengan fallback ringan, tiga warna aura pilihan pengguna, percakapan tamu, timer aktivitas 1–2 menit, pembacaan respons menggunakan suara perangkat, penghapusan sesi, kuota API, manifest PWA dan halaman offline.
 
-Tanpa kredensial, UI menampilkan **mode demo** dengan respons skenario. Database lokal sementara berada di memori dan hilang ketika server berhenti. Dengan `DATABASE_URL`, aplikasi menggunakan PostgreSQL. Dengan `OPENAI_API_KEY` dan `OPENAI_MODEL`, chat menggunakan penyedia AI dan input suara memakai transkripsi. Percakapan AI memerlukan internet. Suara Indonesia bergantung pada layanan suara perangkat; suara unik tiap karakter belum tersedia. Kamera dinonaktifkan pada versi ini.
+Tanpa kredensial, UI menampilkan **mode demo** dengan respons skenario. Database lokal sementara berada di memori dan hilang ketika server berhenti. Dengan `DATABASE_URL`, aplikasi menggunakan PostgreSQL. Dengan `OPENAI_API_KEY` dan `OPENAI_MODEL`, chat menggunakan penyedia AI dan input suara memakai transkripsi. Percakapan AI memerlukan internet. Suara Indonesia bergantung pada layanan suara perangkat; suara unik tiap karakter belum tersedia. Aura Scan opsional tersedia untuk deteksi titik wajah lokal; lihat bagian Mood Room dan Aura Scan.
 
 ## Jalankan
 
@@ -71,7 +71,7 @@ Warna aura adalah representasi suasana yang dipilih pengguna. Tidak ada diagnosi
 
 - Sesi tamu saat ini bukan akun pengguna permanen; kuota per sesi tidak mencegah semua penyalahgunaan oleh orang yang membuat sesi baru. Tambahkan verifikasi akun, batas global biaya, dan proteksi bot sebelum membuka AI berbayar ke publik.
 - Rate limit lokal perlu penyimpanan bersama ketika memakai beberapa instance.
-- Belum ada subscription, pembayaran, push notification, dashboard admin, APK Android, voice realtime, kamera, Kiko atau Sapa.
+- Belum ada subscription, pembayaran, push notification, dashboard admin, APK Android, voice realtime, Kiko atau Sapa.
 - Penghapusan sesi menghapus data aplikasi; tidak menjamin penghapusan data yang telah diproses penyedia eksternal.
 - Uji evaluasi agent, kebijakan privasi, penanganan percakapan berisiko, dan dukungan pengguna sebelum produksi.
 - Uji Android nyata untuk mikrofon, suara Indonesia, WebGL, dan instalasi PWA. Ikon PNG 192/512 tersedia; pemasangan tetap perlu diuji di perangkat nyata.
@@ -99,3 +99,9 @@ Panduan pilot dan pembagian kerja agent tersedia di `docs/GO_TO_MARKET.md` dan `
 Pilih Santai atau Ceria di kartu avatar, atau pilih musik Sinar kecil. Ceritakan aktivitas lewat kolom aktivitas atau chat. Desain, coding, menulis, dan belajar memiliki visual kantor 3D; aktivitas lain diberi label pengguna dengan ruang kerja umum. Pilihan laptop/komputer dan tombol Akhiri tersedia. Pemetaan aktivitas saat ini berbasis kata kunci lokal, bukan AI generatif pembuat adegan. Chat preview tetap demo. Mode ringan tetap dapat dipilih untuk perangkat yang kesulitan menampilkan 3D.
 
 Ruang aktivitas memiliki dekorasi tersendiri: studio desain, ruang coding, sudut menulis, dan ruang belajar. Nama ruang serta alat kerjanya ditampilkan di kartu avatar. Aktivitas yang belum dikenali tetap memakai ruang kerja umum.
+
+## Kontribusi dan komunitas
+
+Kode Renso memakai [lisensi MIT](LICENSE). Kontribusi manusia dan agent AI disambut melalui issue dan pull request. Baca [panduan kontribusi](CONTRIBUTING.md), [komunitas](docs/COMMUNITY.md), dan [kode etik](CODE_OF_CONDUCT.md). Usulan fitur baru, optimasi, riset audio, ruang aktivitas, aksesibilitas, dan marketing dapat diajukan; perubahan ditinjau sebelum digabung.
+
+Status akses repository ditentukan di GitHub Settings. Lisensi ini tidak otomatis mengubah repository privat menjadi publik. Dependensi, model MediaPipe, font, serta layanan AI memiliki ketentuan masing-masing; lisensi MIT Renso mencakup kode yang dibuat dalam proyek ini.
