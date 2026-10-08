@@ -1,7 +1,6 @@
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import rateLimit from '@fastify/rate-limit';
-import fastifyStatic from '@fastify/static';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { randomBytes, createHash } from 'node:crypto';
@@ -77,7 +76,9 @@ export async function buildApp(options = {}) {
     } catch(error) {await store.refund(id); return reply.code(error instanceof ProviderError && error.status === 429 ? 429 : 503).send({error:error instanceof ProviderError && error.status === 429 ? 'Layanan suara sedang mencapai batas penggunaan. Coba ketik pesanmu.' : 'Rekaman belum bisa diproses. Coba ketik pesanmu.'});}
   });
   app.setErrorHandler((error,_request,reply)=>{ reply.code(error.statusCode && error.statusCode < 500 ? error.statusCode : 500).send({error:error.validation?'Periksa isi pesanmu.':error.statusCode===429?'Terlalu banyak permintaan. Tunggu sebentar.':'Permintaan belum bisa diproses.'}); });
-  if(existsSync(resolve('dist/index.html'))) {
+  // Vercel serves dist separately. Load the static plugin only for standalone hosting.
+  if(options.serveStatic !== false && existsSync(resolve('dist/index.html'))) {
+    const { default: fastifyStatic } = await import('@fastify/static');
     await app.register(fastifyStatic,{root:resolve('dist')});
     app.setNotFoundHandler((request,reply)=>request.url.startsWith('/api/')?reply.code(404).send({error:'Tidak ditemukan.'}):reply.sendFile('index.html'));
   }

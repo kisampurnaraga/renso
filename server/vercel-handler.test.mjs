@@ -1,6 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer, request as httpRequest } from 'node:http';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+test('API boots with require(ESM) disabled even when frontend dist exists', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'renso-api-'));
+  try {
+    mkdirSync(join(directory, 'dist'));
+    writeFileSync(join(directory, 'dist/index.html'), '<html>frontend</html>');
+    const moduleUrl = new URL('./app.mjs', import.meta.url).href;
+    const script = `
+      const { buildApp } = await import(${JSON.stringify(moduleUrl)});
+      const app = await buildApp({serveStatic:false,env:{APP_ORIGIN:'http://localhost:5173'}});
+      const response = await app.inject({method:'GET',url:'/api/status'});
+      if(response.statusCode !== 200) throw new Error('API startup failed');
+      const frontend = await app.inject({method:'GET',url:'/'});
+      if(frontend.statusCode !== 404) throw new Error('API must not serve frontend files');
+      await app.close();
+    `;
+    execFileSync(process.execPath, ['--no-experimental-require-module', '--input-type=module', '-e', script], {cwd:directory,stdio:'pipe'});
+  } finally { rmSync(directory, {recursive:true,force:true}); }
+});
 
 function request(url, options = {}) {
   return new Promise((resolve, reject) => {
