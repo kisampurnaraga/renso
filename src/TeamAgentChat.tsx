@@ -40,7 +40,11 @@ export default function TeamAgentChat({teamId,language}:Props){
     const timeout=setTimeout(()=>controller.abort(),35000);
     async function call(path:string,body?:unknown){
       const response=await fetch(`/api${path}`,{method:'POST',credentials:'same-origin',headers:body?{'Content-Type':'application/json'}:undefined,body:body?JSON.stringify(body):undefined,signal:controller.signal});
-      const data=await response.json();if(!response.ok)throw new Error(data.error||(english?'Service unavailable.':'Layanan belum tersedia.'));return data;
+      if(!response.headers.get('content-type')?.includes('application/json'))throw new Error(english?`The chat service returned an invalid response (HTTP ${response.status}). Refresh the app and try again.`:`Layanan chat belum memberikan respons yang sesuai (HTTP ${response.status}). Muat ulang aplikasi lalu coba lagi.`);
+      let data;
+      try{data=await response.json();}catch{throw new Error(english?'The chat response could not be read. Try again shortly.':'Respons chat belum bisa dibaca. Coba lagi sebentar.');}
+      if(!data||typeof data!=='object')throw new Error(english?'The chat response is invalid.':'Respons chat belum sesuai.');
+      if(!response.ok)throw new Error(typeof data.error==='string'?data.error:(english?'Service unavailable.':'Layanan belum tersedia.'));return data;
     }
     try{
       await call('/session');

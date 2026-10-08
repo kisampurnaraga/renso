@@ -76,3 +76,17 @@ test('Vercel adapter fails closed without production database and does not leak 
   assert.equal(response.headers.get('cache-control'),'no-store');
   assert.doesNotMatch(await response.text(), /DATABASE_URL|GROQ_API_KEY|stack|postgres/i);
 });
+
+test('explicit nested team route reaches the API handler with JSON responses', async t => {
+  const { default: handler } = await import('../api/team/chat.js');
+  const server = createServer(handler);
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  t.after(()=>new Promise(resolve=>server.close(resolve)));
+  const base=`http://127.0.0.1:${server.address().port}`;
+  const session=await request(`${base}/api/session`,{method:'POST',headers:{origin:'http://localhost:5173'}});
+  const cookie=session.headers.get('set-cookie').split(';')[0];
+  const result=await request(`${base}/api/team/chat`,{method:'POST',headers:{origin:'http://localhost:5173',cookie,'Content-Type':'application/json'},body:JSON.stringify({team:'backend',language:'id',message:'Apa targetmu?'})});
+  assert.equal(result.status,503); // Local fixture has no live provider.
+  assert.match(result.headers.get('content-type'),/application\/json/);
+  assert.match((await result.json()).error,/layanan AI/);
+});
