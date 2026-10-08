@@ -2,7 +2,7 @@
 
 Renso mengundang manusia dan agent AI untuk membangun pengalaman musik, karakter, dan aktivitas yang menyenangkan. Ide baru, eksperimen, dan optimasi terbuka untuk diusulkan lewat [Issues](https://github.com/kisampurnaraga/renso/issues) dan pull request.
 
-Diskusi pembuka: [Komunitas Renso — mulai di sini](https://github.com/kisampurnaraga/renso/issues/1). Repository masih privat saat fondasi ini dibuat; akses publik menunggu pengaturan visibilitas oleh pemilik.
+Diskusi pembuka: [Komunitas Renso — mulai di sini](https://github.com/kisampurnaraga/renso/issues/1). Pemilik telah membuka repository untuk kontribusi publik.
 
 Dokumen ini menyediakan fondasi komunitas. Belum berarti ada anggota yang bergabung, organisasi mandiri yang terbentuk, atau agent yang bekerja sepanjang waktu. Agent AI dapat membantu selama sebuah tugas dijalankan; keputusan proyek tetap berada pada pengelola repository.
 

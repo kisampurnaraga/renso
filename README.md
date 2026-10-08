@@ -10,7 +10,7 @@ Fondasi MVP yang dapat dijalankan lokal. **Belum merupakan layanan produksi berb
 
 Berfungsi: Teduh dan Spark, avatar 3D dengan fallback ringan, tiga warna aura pilihan pengguna, percakapan tamu, timer aktivitas 1–2 menit, pembacaan respons menggunakan suara perangkat, penghapusan sesi, kuota API, manifest PWA dan halaman offline.
 
-Tanpa kredensial, UI menampilkan **mode demo** dengan respons skenario. Database lokal sementara berada di memori dan hilang ketika server berhenti. Dengan `DATABASE_URL`, aplikasi menggunakan PostgreSQL. Dengan `OPENAI_API_KEY` dan `OPENAI_MODEL`, chat menggunakan penyedia AI dan input suara memakai transkripsi. Percakapan AI memerlukan internet. Suara Indonesia bergantung pada layanan suara perangkat; suara unik tiap karakter belum tersedia. Aura Scan opsional tersedia untuk deteksi titik wajah lokal; lihat bagian Mood Room dan Aura Scan.
+Tanpa kredensial, UI menampilkan **mode demo** dengan respons skenario. Database lokal sementara berada di memori dan hilang ketika server berhenti. Dengan `DATABASE_URL`, aplikasi menggunakan PostgreSQL. Backend mendukung Groq (`AI_PROVIDER=groq`, `GROQ_API_KEY`, `GROQ_MODEL`) dan OpenAI lama (`AI_PROVIDER=openai`). Groq input suara memerlukan `GROQ_TRANSCRIPTION_MODEL` terpisah. Panduan aktivasi ada di [GROQ_SETUP.md](docs/GROQ_SETUP.md). Percakapan AI memerlukan internet. Suara Indonesia bergantung pada layanan suara perangkat; suara unik tiap karakter belum tersedia. Aura Scan opsional tersedia untuk gerakan ekspresi wajah lokal; lihat bagian Mood Room dan Aura Scan.
 
 ## Jalankan
 
@@ -48,7 +48,7 @@ Jangan memasukkan `.env`, connection string, atau API key ke GitHub. Jangan mena
 
 Import repository ini sebagai project Vite, build `npm run build`, output `dist`, install `npm ci`, Node.js 24. Tambahkan environment variable publik `VITE_RENSO_MODE=demo` untuk Preview. Konfigurasi platform tersedia di `vercel.json`.
 
-Mode ini menjalankan respons demo di browser dan tidak membutuhkan backend/database. Avatar, aura, timer, chat skenario dan audio perangkat dapat diuji. Label preview selalu terlihat; mikrofon/transkripsi dan AI langsung belum aktif. Untuk kembali ke backend, gunakan `VITE_RENSO_MODE=api` dan sediakan routing `/api` ke backend yang sudah dikonfigurasi, kemudian rebuild.
+Mode ini menjalankan respons demo di browser dan tidak membutuhkan backend/database. Avatar, aura, timer, chat skenario dan audio perangkat dapat diuji. Label preview selalu terlihat; mikrofon/transkripsi dan AI langsung belum aktif. Entry point `api/[...path].js` tersedia untuk Vercel. Untuk mengaktifkan backend, pasang secret provider, database yang sudah dimigrasi, origin HTTPS yang tepat, gunakan `VITE_RENSO_MODE=api`, lalu rebuild; lihat [panduan Groq](docs/GROQ_SETUP.md).
 
 Pengujian lokal mode frontend-only:
 
@@ -90,7 +90,7 @@ docs/            Arsitektur dan roadmap
 
 Mood Room memainkan instrumental yang disintesis di browser dengan Web Audio. Pengguna harus menekan putar; tersedia pilihan suasana, volume, dan mode musik saja. Audio berhenti saat halaman disembunyikan. Gerakan avatar saat musik diputar adalah animasi ritmis, bukan analisis beat dari mikrofon.
 
-Aura Scan meminta izin kamera secara eksplisit. MediaPipe Face Landmarker mendeteksi titik wajah secara lokal, lalu pengguna memilih sendiri suasananya. Kamera bukan MRI dan fitur ini tidak menebak emosi, kepribadian, atau kondisi medis. Foto/video tidak diunggah maupun disimpan. Engine WASM diunduh dari jsDelivr dan model dari Google; jaringan pertama dan dukungan browser memengaruhi ketersediaan. Jika kamera atau model gagal, pemilihan suasana manual tetap tersedia. Kamera dihentikan ketika scanner ditutup atau halaman disembunyikan.
+Aura Scan meminta izin kamera secara eksplisit. MediaPipe Face Landmarker mendeteksi titik wajah dan koefisien gerakan senyum secara lokal. Scan membutuhkan framing wajah yang cukup baik; hasil deskriptif dapat berupa “Gerak senyum terlihat” atau “Ekspresi belum jelas”. Pengguna mengonfirmasi kebutuhan, memilih booster, lalu preset Mood Room disiapkan tanpa autoplay. Kamera bukan MRI dan fitur ini tidak memastikan emosi, kepribadian, atau kondisi medis. Ambang gerakan adalah heuristik produk, belum divalidasi pada wajah nyata. Foto/video dan koefisien tidak diunggah maupun disimpan. Engine WASM diunduh dari jsDelivr dan model dari Google; jaringan pertama dan dukungan browser memengaruhi ketersediaan. Jika kamera atau model gagal, pemilihan suasana manual tetap tersedia. Kamera dihentikan ketika scanner ditutup atau halaman disembunyikan. Riset, lisensi dan batas pengujian ada di [FACE_SCAN.md](docs/FACE_SCAN.md).
 
 Panduan pilot dan pembagian kerja agent tersedia di `docs/GO_TO_MARKET.md` dan `docs/AGENT_TEAM.md`. Agent tim bekerja saat tugas dijalankan, belum menjadi layanan otomatis yang aktif sepanjang waktu.
 

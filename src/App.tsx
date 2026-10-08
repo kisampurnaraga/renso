@@ -19,7 +19,7 @@ const MOODS = {
 type Agent = keyof typeof AGENTS;
 type Mood = keyof typeof MOODS;
 type Message = {role:'user'|'assistant';content:string};
-type Status = {ai:'live'|'demo';database:string;voiceInput:boolean;frontendDemo?:boolean};
+type Status = {ai:'live'|'demo';database:string;voiceInput:boolean;provider?:'groq'|'openai';frontendDemo?:boolean};
 class AvatarBoundary extends Component<{children:ReactNode},{failed:boolean}> {
   state = {failed:false};
   static getDerivedStateFromError() { return {failed:true}; }
@@ -47,6 +47,7 @@ export default function App() {
   const [modal,setModal] = useState<'aura'|'scan'|'privacy'|'voice'|null>(null);
   const [musicPlaying,setMusicPlaying] = useState(false);
   const [musicOnly,setMusicOnly] = useState(false);
+  const [scanMusic,setScanMusic] = useState<{mood:Mood;sequence:number}|null>(null);
   const [workEnabled,setWorkEnabled] = useState(false);
   const [workMode,setWorkMode] = useState<'calm'|'cheerful'>('cheerful');
   const [workActivity,setWorkActivity] = useState<WorkActivity|null>(null);
@@ -136,17 +137,17 @@ export default function App() {
   }
   async function deleteData(){
     if(requestLock.current)return;requestLock.current=true;setBusy(true);stopAudio();
-    try{await api('/session',{method:'DELETE'});try{localStorage.removeItem('renso:v1:mood');localStorage.removeItem('renso:v1:light');}catch{}endWork();setMood('blue');setLight(false);setMessages([{role:'assistant',content:AGENTS[agent].greeting}]);setInput('');setSeconds(null);setActivity(null);setModal(null);await connect();setNotice('Data sesi dihapus. Kamu memulai sesi tamu baru.');}
+    try{await api('/session',{method:'DELETE'});try{localStorage.removeItem('renso:v1:mood');localStorage.removeItem('renso:v1:light');}catch{}endWork();setMood('blue');setScanMusic(null);setLight(false);setMessages([{role:'assistant',content:AGENTS[agent].greeting}]);setInput('');setSeconds(null);setActivity(null);setModal(null);await connect();setNotice('Data sesi dihapus. Kamu memulai sesi tamu baru.');}
     catch(e){setError(e instanceof Error?e.message:'Data belum bisa dihapus.');}finally{requestLock.current=false;setBusy(false);}
   }
   function startActivity(kind:'rest'|'start'){setActivity(kind);setSeconds(kind==='rest'?60:120);stopAudio();}
-  function selectScannedMood(next:Mood){setMood(next);setModal(null);setNotice('Aura mengikuti suasana yang kamu pilih. Pilih musik untuk menemanimu.');}
+  function selectScannedMood(next:Mood){setMood(next);setScanMusic(previous=>({mood:next,sequence:(previous?.sequence||0)+1}));setModal(null);setNotice('Musik disiapkan sesuai pilihanmu. Ketuk Putar musik di Mood Room untuk mulai.');}
   function changeMusicOnly(only:boolean){setMusicOnly(only);if(only)stopAudio();}
   const latest = [...messages].reverse().find(m=>m.role==='assistant')?.content || '';
   return <div className="app" style={{'--aura':MOODS[mood].color} as CSSProperties}>
     <header className="topbar"><a className="brand" href="/" aria-label="Renso beranda"><span className="brand-mark">≋</span>renso<span className="brand-note">resonansi soul</span></a><div className="top-actions">{install?<button className="quiet" onClick={async()=>{await install.prompt();setInstall(null);}}>Pasang Renso</button>:null}<button className="quiet" onClick={()=>setModal('privacy')}>Privasi</button><span className="version">EARLY ACCESS</span></div></header>
     <main><div className="intro"><div><p className="eyebrow">RUANG MUSIK, WARNA, DAN TEMAN</p><h1>Temukan ritmemu.<br/><span>Temani suasanamu.</span></h1></div><p className="intro-note">Musik pilihanmu.<br/>Teman di sisimu.<br/>Mulai dari yang terasa nyaman.</p></div>
-    <Suspense fallback={<div className="feature-loading" role="status">Menyiapkan Mood Room…</div>}><MoodRoom onMoodChange={musicMood} onPlaybackChange={setMusicPlaying} onMusicOnlyChange={changeMusicOnly}/></Suspense>
+    <Suspense fallback={<div className="feature-loading" role="status">Menyiapkan Mood Room…</div>}><MoodRoom recommendation={scanMusic} onMoodChange={musicMood} onPlaybackChange={setMusicPlaying} onMusicOnlyChange={changeMusicOnly}/></Suspense>
     <div className="workspace">
       <section className={workEnabled&&workActivity?"stage is-working":"stage"} aria-label="Teman dan aura"><div className="stage-header"><span className="pill">{AGENTS[agent].mark} {AGENTS[agent].name}</span><button className="quiet" aria-pressed={light} onClick={()=>setLight(!light)}>Mode {light?'3D':'ringan'}</button></div>
         <div className="avatar-space">{light?<div className="avatar-fallback"><span>{AGENTS[agent].mark}</span><p>{AGENTS[agent].name} menemanimu</p></div>:<AvatarBoundary><Suspense fallback={<div className="avatar-fallback"><p>Temanmu sedang datang…</p></div>}><Avatar color={MOODS[mood].color} agent={agent} speaking={speaking} musicPlaying={musicPlaying} reduced={reduced} workActivity={workEnabled?workActivity:null} workMode={workMode} workstation={workstation}/></Suspense></AvatarBoundary>}<span className="orbit-label">{speaking?'Sedang berbicara':recording?'Mendengarkan rekamanmu':workEnabled&&workActivity?workLabel:musicPlaying?'Menemani musikmu':MOODS[mood].label}</span></div>

@@ -3,6 +3,7 @@ import { MoodMusic, type MusicPreset } from './music-engine';
 import './mood-room.css';
 
 type Props = {
+  recommendation?: {mood:'blue'|'green'|'red';sequence:number}|null;
   onMoodChange: (mood: 'blue' | 'green' | 'red') => void;
   onPlaybackChange: (playing: boolean) => void;
   onMusicOnlyChange: (only: boolean) => void;
@@ -13,7 +14,7 @@ const rooms: { id: MusicPreset; mood: 'blue' | 'green' | 'red'; icon: string; ti
   { id: 'bright', mood: 'red', icon: '☀', title: 'Sinar kecil', detail: 'Melodi ceria · perkusi ringan' },
 ];
 
-export default function MoodRoom({ onMoodChange, onPlaybackChange, onMusicOnlyChange }: Props) {
+export default function MoodRoom({ recommendation, onMoodChange, onPlaybackChange, onMusicOnlyChange }: Props) {
   const [preset, setPreset] = useState<MusicPreset>('ambient');
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -41,6 +42,14 @@ export default function MoodRoom({ onMoodChange, onPlaybackChange, onMusicOnlyCh
     callbacks.current.onPlaybackChange(false);
     if (message) setNotice(message);
   }
+
+  useEffect(() => {
+    if (!recommendation) return;
+    const room = rooms.find(item => item.mood === recommendation.mood)!;
+    stop(`${room.title} disiapkan dari pilihanmu di Aura Scan. Ketuk Putar musik untuk mulai.`);
+    setPreset(room.id);
+    setRemaining(300);
+  }, [recommendation]);
 
   useEffect(() => {
     mounted.current = true;

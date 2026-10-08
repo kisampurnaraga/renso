@@ -41,3 +41,13 @@ Replaced the shared decor with activity-specific asset groups and palettes. All 
 Laptop and desktop displays now face the seated avatar; the work camera views the desk from the side. The coding secondary monitor also faces the avatar. Build and 13 tests pass. Local Chromium work-flow QA passes with no page errors; updated mobile laptop and desktop design screenshots visually inspected. Physical Android testing remains pending.
 
 Added MIT license, contribution/community guides, code of conduct, issue forms, and PR template. Community welcome issue #1 exists. Repository visibility was verified as private; these files do not change access or establish an always-running AI team.
+
+## Groq adapter and expression-to-booster flow (2026-10-08)
+
+Repository is now verified public after the owner's visibility change. Groq selectable chat and optional Indonesian transcription are implemented, with backward-compatible OpenAI configuration. GPT-OSS uses a separate bounded reasoning budget and returns only final content. API key stays server-side. Upstream quota errors and timeouts refund session reservations; no hidden demo/provider fallback.
+
+Build passes and 28 tests pass, covering backend regressions, Groq mocked endpoints, voice configuration, multipart handling, quota/timeout behavior, synthetic face quality and coefficients, and real local HTTP requests through the Vercel adapter (JSON/cookies/origin/fail-closed production). API adapter requires migrated database and exact HTTPS origin in production.
+
+Local Chromium mobile tests pass: explicit camera permission, denied permission/manual needs, preset recommendation without autoplay, late stream cleanup, failed model cleanup, and no horizontal overflow/page errors. A separate synthetic video + mocked model-output test verifies bad framing recovery, completed scan observation, detector/track cleanup, manual override of suggested booster, and zero backend calls. This tests the UI/model integration boundary, not real MediaPipe recognition accuracy. Updated mobile scanner result visually inspected.
+
+Actual Groq calls, Neon production connection, Vercel API activation, real human face accuracy, and Android physical camera remain unverified. Deployed preview remains explicitly frontend demo until secrets/database are configured. MediaPipe coefficients are descriptive movement signals; thresholds and music suggestions are unvalidated product heuristics, not emotion diagnosis or proven mood improvement.

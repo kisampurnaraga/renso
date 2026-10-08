@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FaceLandmarker } from '@mediapipe/tasks-vision';
 import './aura-scanner.css';
+import { faceQuality, smileMovement, expressionObservation, boosterForNeed } from './face-expression.mjs';
 
 type Mood = 'blue' | 'green' | 'red';
 type Phase = 'idle' | 'loading' | 'scanning' | 'done' | 'error';
@@ -14,6 +15,8 @@ export default function AuraScanner({ onSelect, onClose }: { onSelect: (mood: Mo
   const [phase, setPhase] = useState<Phase>('idle');
   const [message, setMessage] = useState('Kamera hanya aktif setelah kamu mengizinkannya.');
   const [progress, setProgress] = useState(0);
+  const [observation, setObservation] = useState<string | null>(null);
+  const [need, setNeed] = useState('');
   const [aspect, setAspect] = useState(4 / 3);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -51,7 +54,7 @@ export default function AuraScanner({ onSelect, onClose }: { onSelect: (mood: Mo
     return () => { mounted.current = false; document.removeEventListener('visibilitychange', hidden); release(); };
   }, []);
 
-  function manual() { release(); setPhase('done'); setMessage('Tanpa kamera juga bisa. Kamu yang menentukan suasanamu.'); }
+  function manual() { release(); setObservation(null); setNeed(''); setPhase('done'); setMessage('Tanpa kamera juga bisa. Kamu yang menentukan suasanamu.'); }
   function choose(mood: Mood) { release(); onSelect(mood); }
 
   async function start() {
@@ -61,6 +64,8 @@ export default function AuraScanner({ onSelect, onClose }: { onSelect: (mood: Mo
     const fail = (text: string) => { if (!active()) return; release(); setPhase('error'); setMessage(text); };
     setPhase('loading');
     setProgress(0);
+    setObservation(null);
+    setNeed('');
     setMessage('Izinkan kamera, lalu tunggu pemindai siap.');
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
       fail('Browser ini belum mendukung kamera di halaman ini. Gunakan HTTPS atau pilih suasana tanpa kamera.');
@@ -87,7 +92,7 @@ export default function AuraScanner({ onSelect, onClose }: { onSelect: (mood: Mo
         baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task', delegate: 'CPU' },
         runningMode: 'VIDEO', numFaces: 1,
         minFaceDetectionConfidence: 0.6, minFacePresenceConfidence: 0.6, minTrackingConfidence: 0.6,
-        outputFaceBlendshapes: false,
+        outputFaceBlendshapes: true,
       });
       if (!active()) { detector.close(); return; }
       modelRef.current = detector;
@@ -96,6 +101,7 @@ export default function AuraScanner({ onSelect, onClose }: { onSelect: (mood: Mo
       setMessage('Posisikan wajah di tengah dengan cahaya yang cukup.');
       const started = performance.now();
       let lastInference = -Infinity, lastFrame = -1, goodFrames = 0;
+      let samples: number[] = [];
       timerRef.current = setTimeout(() => fail('Wajah belum terdeteksi dengan cukup jelas. Tambahkan cahaya, coba lagi, atau pilih suasana tanpa kamera.'), 12000);
       function frame(now: number) {
         if (!active()) return;
@@ -122,19 +128,23 @@ export default function AuraScanner({ onSelect, onClose }: { onSelect: (mood: Mo
                 }
               }
             }
-            if (landmarks) {
+            if (faceQuality(landmarks)) {
               goodFrames++;
-              setMessage('Titik wajah terdeteksi. Ini tidak menentukan perasaanmu.');
+              const smile = smileMovement(result.faceBlendshapes?.[0]?.categories);
+              if (smile !== null) samples.push(smile);
+              setMessage('Wajah berada di tengah. Mengamati gerakan ekspresi di perangkatmu…');
               setProgress(Math.min(100, Math.round(goodFrames / 20 * 100)));
               if (goodFrames >= 20 && now - started >= 2500) {
+                const label = expressionObservation(samples);
                 release();
+                setObservation(label);
                 setPhase('done');
-                setMessage('Titik wajah terdeteksi. Sekarang, pilih suasana yang ingin menemanimu.');
+                setMessage('Scan selesai. Bagaimana perasaanmu dan apa yang kamu butuhkan sekarang?');
                 return;
               }
             } else {
-              goodFrames = 0; setProgress(0);
-              setMessage('Wajah belum terlihat. Hadapkan wajah ke kamera dengan cahaya cukup.');
+              goodFrames = 0; samples = []; setProgress(0);
+              setMessage(landmarks ? 'Posisikan seluruh wajah di tengah; jangan terlalu dekat atau jauh.' : 'Wajah belum terlihat. Hadapkan wajah ke kamera dengan cahaya cukup.');
             }
           }
           rafRef.current = requestAnimationFrame(frame);
@@ -147,11 +157,12 @@ export default function AuraScanner({ onSelect, onClose }: { onSelect: (mood: Mo
     }
   }
 
+  const recommended = boosterForNeed(need);
   const live = phase === 'loading' || phase === 'scanning';
   return <section className="aura-scanner">
     <p className="eyebrow">AURA SCAN · PILIH SUASANAMU</p>
     <h2 id="modal-title">Ruang kecil untuk merasakan dirimu</h2>
-    <p className="scan-explainer">Pemindai mengenali titik wajah, bukan membaca emosi. Warna aura mengikuti pilihanmu, bukan hasil diagnosis atau MRI.</p>
+    <p className="scan-explainer">Pemindai mengamati gerakan wajah, seperti senyum. Kamu mengonfirmasi kebutuhanmu untuk memilih mood booster. Ini bukan pembacaan pikiran, diagnosis, atau MRI.</p>
     <div className={`scan-preview ${live ? 'is-live' : ''}`} style={{ aspectRatio: aspect }}>
       <video ref={videoRef} muted playsInline aria-label="Pratinjau kamera lokal" className={live ? '' : 'scan-video-hidden'} />
       <canvas ref={canvasRef} aria-hidden="true" />
@@ -161,11 +172,18 @@ export default function AuraScanner({ onSelect, onClose }: { onSelect: (mood: Mo
     </div>
     <p className="scan-status" role="status">{message}</p>
     {phase === 'scanning' ? <progress value={progress} max={100} aria-label="Kemajuan deteksi titik wajah" /> : null}
-    <p className="scan-privacy">Foto, video, dan titik wajah tidak disimpan atau dikirim. Pemindai mengunduh mesin dan model dari CDN jsDelivr dan Google; koneksi ini mengikuti kebijakan penyedianya. Kamera berhenti setelah selesai atau saat kamu menutupnya.</p>
+    <p className="scan-privacy">Foto, video, titik wajah, dan koefisien ekspresi tidak disimpan atau dikirim. Pemindai mengunduh mesin dan model dari CDN jsDelivr dan Google; koneksi ini mengikuti kebijakan penyedianya. Kamera berhenti setelah selesai atau saat kamu menutupnya.</p>
     {phase !== 'done' ? <div className="scan-actions">
       <button className="primary" disabled={live} onClick={() => void start()}>{phase === 'error' ? 'Coba pindai lagi' : live ? 'Pemindai sedang aktif…' : 'Izinkan kamera & mulai'}</button>
       <button className="scan-secondary" onClick={manual}>{live ? 'Hentikan & pilih suasana' : 'Pilih tanpa kamera'}</button>
-    </div> : <div className="scan-moods"><h3>Suasana apa yang kamu inginkan?</h3>{OPTIONS.map(option => <button key={option.mood} className={`scan-mood scan-${option.mood}`} onClick={() => choose(option.mood)}><span aria-hidden="true" className="scan-dot" /><span><strong>{option.label}</strong><small>{option.description}</small></span><span aria-hidden="true">→</span></button>)}<button className="scan-secondary" onClick={() => void start()}>Pindai lagi</button></div>}
+    </div>  : <div className="scan-moods">
+      {observation ? <div className="scan-observation"><strong>{observation}</strong><p>Ini hanya gerakan yang terlihat, bukan kepastian perasaanmu.</p></div> : null}
+      <h3>Apa yang kamu butuhkan sekarang?</h3>
+      <div className="scan-needs" aria-label="Kebutuhan yang kamu rasakan">{[{ id: 'pause', label: 'Butuh jeda' }, { id: 'start', label: 'Sulit mulai' }, { id: 'cheerful', label: 'Ingin ceria' }].map(item => <button key={item.id} className="scan-secondary" aria-pressed={need === item.id} onClick={() => setNeed(item.id)}>{item.label}</button>)}</div>
+      {recommended ? <p className="scan-recommendation" role="status">Pilihanmu cocok ditemani suasana {OPTIONS.find(option => option.mood === recommended)?.label.toLowerCase()}. Kamu tetap bebas memilih lainnya.</p> : <p className="scan-recommendation">Pilih kebutuhanmu untuk mendapat saran, atau langsung pilih suasana.</p>}
+      <h3>Pilih mood booster</h3>
+      {OPTIONS.map(option => <button key={option.mood} className={`scan-mood scan-${option.mood} ${recommended === option.mood ? 'is-recommended' : ''}`} onClick={() => choose(option.mood)}><span aria-hidden="true" className="scan-dot" /><span><strong>{option.label}{recommended === option.mood ? ' · Disarankan' : ''}</strong><small>{option.description}</small></span><span aria-hidden="true">→</span></button>)}<button className="scan-secondary" onClick={() => void start()}>Pindai lagi</button>
+    </div>}
     <button className="scan-secondary scan-close" onClick={() => { release(); onClose(); }}>Tutup pemindai</button>
   </section>;
 }

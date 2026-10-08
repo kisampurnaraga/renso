@@ -7,6 +7,7 @@ import { resolve } from 'node:path';
 import { randomBytes, createHash } from 'node:crypto';
 import { agents, moods, systemPrompt, demoReply } from './agents.mjs';
 import { createStore } from './store.mjs';
+import { providerConfig, createProvider, ProviderError } from './provider.mjs';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
 export async function buildApp(options = {}) {
@@ -16,8 +17,9 @@ export async function buildApp(options = {}) {
   if(production && !env.DATABASE_URL) throw new Error('Production requires DATABASE_URL and migrated schema');
   const app = Fastify({ logger: false, bodyLimit: 6 * 1024 * 1024 });
   const store = options.store || createStore(env.DATABASE_URL);
-  const providerFetch = options.providerFetch || fetch;
-  const live = !!(env.OPENAI_API_KEY && env.OPENAI_MODEL);
+  const providerSettings = providerConfig(env);
+  const provider = createProvider(providerSettings, options.providerFetch || fetch);
+  const live = providerSettings.live;
   const quota = Math.max(1, Math.min(100, Number(env.DAILY_CHAT_LIMIT) || 20));
   await app.register(cookie);
   await app.register(rateLimit, { max: 60, timeWindow: '1 minute' });
@@ -37,7 +39,7 @@ export async function buildApp(options = {}) {
     if(!id) { reply.code(401).send({ error: 'Sesi berakhir. Mulai sesi baru.' }); return null; }
     return id;
   }
-  app.get('/api/status', async () => ({ ai: live ? 'live' : 'demo', database: store.persistent ? 'postgresql' : 'temporary', voiceInput: live, agents: Object.values(agents).map(({instruction,...agent})=>agent) }));
+  app.get('/api/status', async () => ({ ai: live ? 'live' : 'demo', provider: providerSettings.name, database: store.persistent ? 'postgresql' : 'temporary', voiceInput: providerSettings.voiceInput, agents: Object.values(agents).map(({instruction,...agent})=>agent) }));
   app.post('/api/session', async (request, reply) => {
     const previous = request.cookies.renso_session;
     if(previous && /^[a-f0-9]{64}$/.test(previous) && await store.findSession(hash(previous))) return { ok: true };
@@ -59,27 +61,20 @@ export async function buildApp(options = {}) {
     const {agent,mood,message,history=[]} = request.body;
     if(!live) return { reply:demoReply(agent,mood,message), mode:'demo' };
     try {
-      const result = await providerFetch('https://api.openai.com/v1/chat/completions', {method:'POST',signal:AbortSignal.timeout(25000),headers:{Authorization:`Bearer ${env.OPENAI_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:env.OPENAI_MODEL,max_completion_tokens:400,messages:[{role:'system',content:systemPrompt(agent,mood)},...history,{role:'user',content:message}]})});
-      if(!result.ok) throw new Error('provider unavailable');
-      const data = await result.json(); const text = data.choices?.[0]?.message?.content;
-      if(typeof text !== 'string' || !text.trim()) throw new Error('empty response');
+      const text = await provider.chat([{role:'system',content:systemPrompt(agent,mood)},...history,{role:'user',content:message}]);
       return { reply: text, mode:'live' };
-    } catch { await store.refund(id); return reply.code(503).send({error:'Teman Renso belum bisa menjawab. Coba lagi sebentar.'}); }
+    } catch(error) { await store.refund(id); return reply.code(error instanceof ProviderError && error.status === 429 ? 429 : 503).send({error:error instanceof ProviderError && error.status === 429 ? 'Layanan AI sedang mencapai batas penggunaan. Coba lagi sebentar.' : 'Teman Renso belum bisa menjawab. Coba lagi sebentar.'}); }
   });
   app.addContentTypeParser(['audio/webm','audio/ogg','audio/mp4'],{parseAs:'buffer'},(_request,body,done)=>done(null,body));
   app.post('/api/transcribe', { config:{ rateLimit:{max:6,timeWindow:'1 minute'} } }, async(request,reply)=>{
     const id = await requireSession(request,reply); if(!id) return;
-    if(!live) return reply.code(503).send({error:'Input suara tersedia setelah layanan AI terhubung.'});
+    if(!providerSettings.voiceInput) return reply.code(503).send({error:'Input suara tersedia setelah layanan transkripsi terhubung.'});
     if(!Buffer.isBuffer(request.body) || request.body.length < 100 || !/^audio\/(webm|ogg|mp4)/.test(request.headers['content-type'] || '')) return reply.code(400).send({error:'Format rekaman tidak didukung.'});
     if(!await store.reserve(id,quota)) return reply.code(429).send({error:'Batas penggunaan hari ini tercapai.'});
     try {
       const type = request.headers['content-type'].split(';')[0];
-      const form = new FormData(); form.append('file',new Blob([request.body],{type}),`voice.${type.split('/')[1]}`); form.append('model','whisper-1'); form.append('language','id');
-      const result = await providerFetch('https://api.openai.com/v1/audio/transcriptions',{method:'POST',signal:AbortSignal.timeout(25000),headers:{Authorization:`Bearer ${env.OPENAI_API_KEY}`},body:form});
-      if(!result.ok) throw new Error('provider unavailable');
-      const data = await result.json(); if(typeof data.text !== 'string') throw new Error('missing text');
-      return {text:data.text.slice(0,2000)};
-    } catch {await store.refund(id); return reply.code(503).send({error:'Rekaman belum bisa diproses. Coba ketik pesanmu.'});}
+      return {text:await provider.transcribe(request.body,type)};
+    } catch(error) {await store.refund(id); return reply.code(error instanceof ProviderError && error.status === 429 ? 429 : 503).send({error:error instanceof ProviderError && error.status === 429 ? 'Layanan suara sedang mencapai batas penggunaan. Coba ketik pesanmu.' : 'Rekaman belum bisa diproses. Coba ketik pesanmu.'});}
   });
   app.setErrorHandler((error,_request,reply)=>{ reply.code(error.statusCode && error.statusCode < 500 ? error.statusCode : 500).send({error:error.validation?'Periksa isi pesanmu.':error.statusCode===429?'Terlalu banyak permintaan. Tunggu sebentar.':'Permintaan belum bisa diproses.'}); });
   if(existsSync(resolve('dist/index.html'))) {
