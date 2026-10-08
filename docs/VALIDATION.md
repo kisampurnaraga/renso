@@ -25,3 +25,9 @@ Source disiapkan untuk repository `kisampurnaraga/renso`, yang dibuat pemilik pa
 ## Distinct music arrangements (2026-10-08)
 
 Replaced shared chord/arpeggio arrangement with separate ambient pads (no percussion), swung lo-fi chords/bass/drums, and bright lead melody/percussion. Local OfflineAudioContext rendered 12 seconds of each preset: non-silent, no clipping, distinct oscillator/percussion event counts and low pairwise waveform correlation. This verifies different synthesized outputs, not listener preference or phone speaker quality.
+
+## Dynamic work companion (2026-10-08)
+
+Mode Santai/Ceria asks for the current activity; choosing the bright music preset also opens the cheerful companion. Local keyword matching maps design/coding/writing/study descriptions to procedural scenes. Unmatched activities use an explicitly labeled generic workspace, not a newly generated custom scene. Laptop/desktop can be switched; work scene can be ended. No camera or task data uploads are required for this visualization. Preview replies remain scripted.
+
+Build and 13 tests pass. Local Chromium verifies bright-mode prompt, description-to-design, chat-to-coding, manual writing/study, generic fallback, laptop/desktop, calm mode, end/reset, and no mobile overflow. Design office scene visually inspected on mobile.

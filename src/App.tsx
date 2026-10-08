@@ -1,4 +1,6 @@
 import { Component, lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import WorkCompanion from './WorkCompanion';
+import { detectWorkActivity, workReply, WORK_ACTIVITIES, type WorkActivity } from './work-activity.mjs';
 import { createDemoClient } from './demo-client.mjs';
 const frontendDemo = import.meta.env.VITE_RENSO_MODE === 'demo';
 const demoApi = frontendDemo ? createDemoClient() : null;
@@ -45,6 +47,11 @@ export default function App() {
   const [modal,setModal] = useState<'aura'|'scan'|'privacy'|'voice'|null>(null);
   const [musicPlaying,setMusicPlaying] = useState(false);
   const [musicOnly,setMusicOnly] = useState(false);
+  const [workEnabled,setWorkEnabled] = useState(false);
+  const [workMode,setWorkMode] = useState<'calm'|'cheerful'>('cheerful');
+  const [workActivity,setWorkActivity] = useState<WorkActivity|null>(null);
+  const [workLabel,setWorkLabel] = useState('');
+  const [workstation,setWorkstation] = useState<'laptop'|'desktop'>('laptop');
   const [light,setLight] = useState(()=>readPreference('light','false')==='true');
   const [install,setInstall] = useState<any>(null);
   const reduced = useReducedMotion();
@@ -79,9 +86,28 @@ export default function App() {
     utterance.onstart=()=>setSpeaking(true);utterance.onend=()=>setSpeaking(false);utterance.onerror=()=>{setSpeaking(false);setNotice('Audio belum bisa diputar. Coba lagi atau baca pesannya.');};
     window.speechSynthesis.speak(utterance);
   }
-  function chooseAgent(next:Agent){stopAudio();setAgent(next);setMessages([{role:'assistant',content:AGENTS[next].greeting}]);setInput('');setNotice('Percakapan baru dimulai. Cerita sebelumnya tidak diteruskan ke agent ini.');}
+  function beginWork(mode:'calm'|'cheerful'){
+    if(requestLock.current||recording)return;
+    stopAudio();setWorkEnabled(true);setWorkMode(mode);setLight(false);setMood(mode==='cheerful'?'red':'blue');setAgent(mode==='cheerful'?'spark':'teduh');
+    setMessages([{role:'assistant',content:mode==='cheerful'?'Yuk, aku temani! Lagi mengerjakan apa yang bikin kamu sulit mulai?':'Aku temani pelan-pelan. Lagi mengerjakan apa hari ini?'}]);setInput('');
+  }
+  function chooseWork(text:string,chosen?:WorkActivity){
+    if(requestLock.current||recording)return;
+    const selected=chosen||detectWorkActivity(text)||'other';
+    setWorkActivity(selected);setWorkLabel(selected==='other'?text.trim().slice(0,80):WORK_ACTIVITIES[selected].label);setLight(false);stopAudio();
+    setMessages(m=>[...m,{role:'user',content:text.trim()},{role:'assistant',content:workReply(selected,workMode)}]);
+  }
+  function endWork(){setWorkEnabled(false);setWorkActivity(null);setWorkLabel('');stopAudio();}
+  function musicMood(next:Mood){setMood(next);if(next==='red')beginWork('cheerful');}
+  function chooseAgent(next:Agent){endWork();stopAudio();setAgent(next);setMessages([{role:'assistant',content:AGENTS[next].greeting}]);setInput('');setNotice('Percakapan baru dimulai. Cerita sebelumnya tidak diteruskan ke agent ini.');}
   async function send(text=input) {
     if(!text.trim()||!ready||requestLock.current||recording)return;
+    const detected=workEnabled?detectWorkActivity(text):null;
+    const safeToVisualize=!/bunuh diri|akhiri hidup|melukai diri|menyakiti diri/i.test(text);
+    if(workEnabled&&safeToVisualize&&(detected||!workActivity)){
+      if(frontendDemo){chooseWork(text,detected||undefined);setInput('');return;}
+      const selected=detected||'other';setWorkActivity(selected);setWorkLabel(selected==='other'?text.trim().slice(0,80):WORK_ACTIVITIES[selected].label);setLight(false);
+    }
     requestLock.current=true;setBusy(true);setError('');stopAudio();
     const history=messages.slice(-6);setMessages(m=>[...m,{role:'user',content:text.trim()}]);setInput('');
     try {const data=await api('/chat',{method:'POST',body:JSON.stringify({agent,mood,message:text.trim(),history})});if(mounted.current)setMessages(m=>[...m,{role:'assistant',content:data.reply}]);}
@@ -110,7 +136,7 @@ export default function App() {
   }
   async function deleteData(){
     if(requestLock.current)return;requestLock.current=true;setBusy(true);stopAudio();
-    try{await api('/session',{method:'DELETE'});try{localStorage.removeItem('renso:v1:mood');localStorage.removeItem('renso:v1:light');}catch{}setMood('blue');setLight(false);setMessages([{role:'assistant',content:AGENTS[agent].greeting}]);setInput('');setSeconds(null);setActivity(null);setModal(null);await connect();setNotice('Data sesi dihapus. Kamu memulai sesi tamu baru.');}
+    try{await api('/session',{method:'DELETE'});try{localStorage.removeItem('renso:v1:mood');localStorage.removeItem('renso:v1:light');}catch{}endWork();setMood('blue');setLight(false);setMessages([{role:'assistant',content:AGENTS[agent].greeting}]);setInput('');setSeconds(null);setActivity(null);setModal(null);await connect();setNotice('Data sesi dihapus. Kamu memulai sesi tamu baru.');}
     catch(e){setError(e instanceof Error?e.message:'Data belum bisa dihapus.');}finally{requestLock.current=false;setBusy(false);}
   }
   function startActivity(kind:'rest'|'start'){setActivity(kind);setSeconds(kind==='rest'?60:120);stopAudio();}
@@ -120,11 +146,12 @@ export default function App() {
   return <div className="app" style={{'--aura':MOODS[mood].color} as CSSProperties}>
     <header className="topbar"><a className="brand" href="/" aria-label="Renso beranda"><span className="brand-mark">≋</span>renso<span className="brand-note">resonansi soul</span></a><div className="top-actions">{install?<button className="quiet" onClick={async()=>{await install.prompt();setInstall(null);}}>Pasang Renso</button>:null}<button className="quiet" onClick={()=>setModal('privacy')}>Privasi</button><span className="version">EARLY ACCESS</span></div></header>
     <main><div className="intro"><div><p className="eyebrow">RUANG MUSIK, WARNA, DAN TEMAN</p><h1>Temukan ritmemu.<br/><span>Temani suasanamu.</span></h1></div><p className="intro-note">Musik pilihanmu.<br/>Teman di sisimu.<br/>Mulai dari yang terasa nyaman.</p></div>
-    <Suspense fallback={<div className="feature-loading" role="status">Menyiapkan Mood Room…</div>}><MoodRoom onMoodChange={setMood} onPlaybackChange={setMusicPlaying} onMusicOnlyChange={changeMusicOnly}/></Suspense>
+    <Suspense fallback={<div className="feature-loading" role="status">Menyiapkan Mood Room…</div>}><MoodRoom onMoodChange={musicMood} onPlaybackChange={setMusicPlaying} onMusicOnlyChange={changeMusicOnly}/></Suspense>
     <div className="workspace">
-      <section className="stage" aria-label="Teman dan aura"><div className="stage-header"><span className="pill">{AGENTS[agent].mark} {AGENTS[agent].name}</span><button className="quiet" aria-pressed={light} onClick={()=>setLight(!light)}>Mode {light?'3D':'ringan'}</button></div>
-        <div className="avatar-space">{light?<div className="avatar-fallback"><span>{AGENTS[agent].mark}</span><p>{AGENTS[agent].name} menemanimu</p></div>:<AvatarBoundary><Suspense fallback={<div className="avatar-fallback"><p>Temanmu sedang datang…</p></div>}><Avatar color={MOODS[mood].color} agent={agent} speaking={speaking} musicPlaying={musicPlaying} reduced={reduced}/></Suspense></AvatarBoundary>}<span className="orbit-label">{speaking?'Sedang berbicara':recording?'Mendengarkan rekamanmu':musicPlaying?'Menemani musikmu':MOODS[mood].label}</span></div>
-        <div className="stage-copy"><h2>{AGENTS[agent].role}</h2><p>Kamu menentukan suasananya. Aku menemani langkahnya.</p></div>
+      <section className={workEnabled&&workActivity?"stage is-working":"stage"} aria-label="Teman dan aura"><div className="stage-header"><span className="pill">{AGENTS[agent].mark} {AGENTS[agent].name}</span><button className="quiet" aria-pressed={light} onClick={()=>setLight(!light)}>Mode {light?'3D':'ringan'}</button></div>
+        <div className="avatar-space">{light?<div className="avatar-fallback"><span>{AGENTS[agent].mark}</span><p>{AGENTS[agent].name} menemanimu</p></div>:<AvatarBoundary><Suspense fallback={<div className="avatar-fallback"><p>Temanmu sedang datang…</p></div>}><Avatar color={MOODS[mood].color} agent={agent} speaking={speaking} musicPlaying={musicPlaying} reduced={reduced} workActivity={workEnabled?workActivity:null} workMode={workMode} workstation={workstation}/></Suspense></AvatarBoundary>}<span className="orbit-label">{speaking?'Sedang berbicara':recording?'Mendengarkan rekamanmu':workEnabled&&workActivity?workLabel:musicPlaying?'Menemani musikmu':MOODS[mood].label}</span></div>
+        <div className="stage-copy"><h2>{workEnabled&&workActivity?'Kita kerja bareng, yuk':AGENTS[agent].role}</h2><p>{workEnabled&&workActivity?WORK_ACTIVITIES[workActivity].tip:'Kamu menentukan suasananya. Aku menemani langkahnya.'}</p></div>
+        <WorkCompanion enabled={workEnabled} mode={workMode} activity={workActivity} label={workLabel} workstation={workstation} disabled={busy||recording} onMode={beginWork} onActivity={chooseWork} onWorkstation={setWorkstation} onEnd={endWork}/>
         <div className="aura-selector" role="group" aria-label="Pilih suasana aura">{Object.entries(MOODS).map(([key,value])=><button key={key} aria-pressed={mood===key} className={mood===key?'aura-choice selected':'aura-choice'} onClick={()=>setMood(key as Mood)}><span className="swatch" style={{background:value.color}}/>{value.label}</button>)}</div>
         <div className="aura-actions"><button className="aura-check" onClick={()=>setModal('aura')}>✧ Cek aura pilihanku</button><button className="scanner-launch" onClick={()=>setModal('scan')}>◎ Aura Scan · kamera</button></div>
       </section>
