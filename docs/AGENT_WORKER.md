@@ -21,6 +21,8 @@ The worker creates bounded code or documentation edits, runs tests and the front
 
 Generated code is tested in a separate job without the Groq key or GitHub write token. Publishing never executes generated code. Allowed paths and edit sizes are validated before applying artifacts. Authentication, queue implementation, deployment/workflow configuration and dependency changes require a separate reviewed change.
 
+Groq requests use at most 6,000 characters of targeted code context and a 2,048-token completion budget. Existing files are changed through snippets that must match exactly once, preserving the rest of each file. This avoids sending or regenerating entire large files for a small task. Tasks needing broader context should be split into smaller assignments.
+
 The queue is persisted in Neon; owner credentials are not. Guest chat and existing scheduled email reports remain separate. Email automation does not make the worker run continuously, and no new report integration is claimed until verified.
 
 ## References

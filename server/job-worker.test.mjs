@@ -4,7 +4,25 @@ import { mkdtemp, mkdir, symlink, rm, readFile, writeFile } from 'node:fs/promis
 import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
-import { validateEdits, parseModelResponse, safeDestination, orderContextFiles } from '../scripts/renso-worker.mjs';
+import { validateEdits, parseModelResponse, safeDestination, orderContextFiles, replaceExactly, contextExcerpt } from '../scripts/renso-worker.mjs';
+
+test('small snippet edits preserve unrelated file content and reject ambiguous matches',()=>{
+  const edit={path:'src/App.tsx',find:"function musicMood(next){setMood(next);beginWork('cheerful');}",replace:'function musicMood(next){setMood(next);}'};
+  assert.deepEqual(validateEdits({files:[edit]}).files,[edit]);
+  const original='// keep header\n'+edit.find+'\n// keep footer';
+  assert.equal(replaceExactly(original,edit.find,edit.replace),'// keep header\n'+edit.replace+'\n// keep footer');
+  assert.throws(()=>replaceExactly('missing',edit.find,edit.replace),/exactly once/);
+  assert.throws(()=>replaceExactly(edit.find+'\n'+edit.find,edit.find,edit.replace),/exactly once/);
+  assert.throws(()=>validateEdits({files:[{...edit,content:'mixed'}]}));
+  assert.throws(()=>validateEdits({files:[{...edit,find:''}]}));
+});
+test('explicit task file and function receive a bounded context excerpt',()=>{
+  assert.equal(orderContextFiles(['src/music-engine.ts','src/App.tsx'],'audio','Fix musicMood in src/App.tsx')[0],'src/App.tsx');
+  const source='// unrelated\n'.repeat(1000)+'function musicMood(next){setMood(next);}\n'+'// trailing\n'.repeat(1000);
+  const excerpt=contextExcerpt(source,'Fix musicMood in src/App.tsx',4000);
+  assert.ok(excerpt.includes('function musicMood'));
+  assert.ok(excerpt.length<=4000);
+});
 
 test('worker prioritizes task implementation over documentation and excludes protected files', () => {
   const names=['docs/ARCHITECTURE.md','src/App.tsx','src/music-engine.ts','src/MoodRoom.tsx','server/app.mjs','.env','src/Avatar.tsx'];
