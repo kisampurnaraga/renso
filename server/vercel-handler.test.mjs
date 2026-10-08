@@ -14,7 +14,7 @@ test('API boots with require(ESM) disabled even when frontend dist exists', () =
     const moduleUrl = new URL('./app.mjs', import.meta.url).href;
     const script = `
       const { buildApp } = await import(${JSON.stringify(moduleUrl)});
-      const app = await buildApp({serveStatic:false,env:{APP_ORIGIN:'http://localhost:5173'}});
+      const app = await buildApp({env:{APP_ORIGIN:'http://localhost:5173'}});
       const response = await app.inject({method:'GET',url:'/api/status'});
       if(response.statusCode !== 200) throw new Error('API startup failed');
       const frontend = await app.inject({method:'GET',url:'/'});

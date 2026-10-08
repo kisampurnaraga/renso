@@ -6,7 +6,7 @@ export default async function handler(request, response) {
   try {
     // Production requires a migrated persistent store; never use instance memory
     // for serverless sessions. Do not disclose startup details to the browser.
-    appPromise ??= buildApp({ serveStatic: false }).then(async app => { await app.ready(); return app; });
+    appPromise ??= buildApp().then(async app => { await app.ready(); return app; });
     const app = await appPromise;
     const chunks = [];
     let size = 0;
