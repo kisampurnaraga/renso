@@ -5,6 +5,7 @@ import { randomBytes, createHash } from 'node:crypto';
 import { agents, moods, systemPrompt, demoReply } from './agents.mjs';
 import { createStore } from './store.mjs';
 import { providerConfig, createProvider, ProviderError } from './provider.mjs';
+import { teamChatSchema, teamChatMessages } from './team-chat.mjs';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
 export async function buildApp(options = {}) {
@@ -61,6 +62,22 @@ export async function buildApp(options = {}) {
       const text = await provider.chat([{role:'system',content:systemPrompt(agent,mood)},...history,{role:'user',content:message}]);
       return { reply: text, mode:'live' };
     } catch(error) { await store.refund(id); return reply.code(error instanceof ProviderError && error.status === 429 ? 429 : 503).send({error:error instanceof ProviderError && error.status === 429 ? 'Layanan AI sedang mencapai batas penggunaan. Coba lagi sebentar.' : 'Teman Renso belum bisa menjawab. Coba lagi sebentar.'}); }
+  });
+  app.post('/api/team/chat', { schema: { body: teamChatSchema } }, async (request, reply) => {
+    const id = await requireSession(request, reply); if (!id) return;
+    const english = request.body.language === 'en';
+    if (!request.body.message.trim()) return reply.code(400).send({ error: english ? 'Write a message first.' : 'Tuliskan pesan terlebih dahulu.' });
+    if (!live) return reply.code(503).send({ error: english ? 'Team chat requires a connected AI service.' : 'Chat tim tersedia setelah layanan AI terhubung.' });
+    if (!await store.reserve(id, quota)) return reply.code(429).send({ error: english ? 'Daily session limit reached. Come back tomorrow.' : 'Batas sesi hari ini tercapai. Kamu bisa kembali besok.' });
+    try {
+      return { reply: await provider.chat(teamChatMessages(request.body)), mode: 'live', team: request.body.team };
+    } catch (error) {
+      await store.refund(id);
+      const limited = error instanceof ProviderError && error.status === 429;
+      return reply.code(limited ? 429 : 503).send({ error: english
+        ? (limited ? 'AI usage limit reached. Try again shortly.' : 'The team assistant cannot answer yet. Try again shortly.')
+        : (limited ? 'Layanan AI sedang mencapai batas penggunaan. Coba lagi sebentar.' : 'Asisten tim belum bisa menjawab. Coba lagi sebentar.') });
+    }
   });
   app.addContentTypeParser(['audio/webm','audio/ogg','audio/mp4'],{parseAs:'buffer'},(_request,body,done)=>done(null,body));
   app.post('/api/transcribe', { config:{ rateLimit:{max:6,timeWindow:'1 minute'} } }, async(request,reply)=>{

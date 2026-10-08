@@ -14,7 +14,7 @@ Karakter adalah representasi visual peran tim. Animasi diam dan keberadaan model
 
 ## Batas sumber data
 
-Papan tugas bersumber dari `src/team-workspace-data.ts`, diperbarui koordinator melalui commit dan deployment. Ini **bukan** telemetry pelaksanaan agent. Angka kartu menghitung tugas dalam catatan, bukan jam kerja, produktivitas, atau pendapatan. Tidak ada worker agent 24/7, tombol dispatch, atau sinkronisasi otomatis dengan sesi Codex/GitHub Issues.
+Papan tugas bersumber dari `shared/team-workspace.mjs` (sumber bersama frontend dan backend), diperbarui koordinator melalui commit dan deployment. Ini **bukan** telemetry pelaksanaan agent. Angka kartu menghitung tugas dalam catatan, bukan jam kerja, produktivitas, atau pendapatan. Tidak ada worker agent 24/7, tombol dispatch, atau sinkronisasi otomatis dengan sesi Codex/GitHub Issues.
 
 `/api/status` membuktikan aplikasi merespons dan konfigurasi terbaca; tidak menjalankan percakapan Groq atau membuktikan setiap request berhasil. Keberhasilan chat produksi dicatat berdasarkan pengujian pengguna pada 8 Oktober 2026.
 
@@ -29,3 +29,15 @@ Halaman publik hanya menampilkan informasi proyek. Jangan menambahkan secret, is
 ## Bahasa
 
 Bahasa Indonesia tetap default. Fondasi bilingual ruang tim sudah tersedia. Terjemahan seluruh produk, pilihan bahasa respons AI, dan keluaran suara per bahasa adalah pekerjaan terpisah yang tercatat dalam antrean. Bahasa tambahan dipilih berdasarkan pengguna pilot.
+
+## Chat agent dan target
+
+Pilih agent kantor, lalu gunakan Chat agent. Setiap peran memiliki target tahap berikutnya dari `shared/team-roles.mjs`; backend menyertakan tugas publik per peran sebagai konteks. Chat tersedia melalui provider AI aktif dan memakai sesi/kuota harian bersama chat Renso. Indonesia dan Inggris didukung untuk chat tim.
+
+Arahan tambahan dapat berisi hasil, kriteria berhasil, dan tenggat. Simpan briefing menyimpannya hanya pada browser ini. Briefing disertakan sebagai konteks user pada permintaan chat, bukan perubahan system prompt, target bersama, atau bukti pekerjaan selesai. Riwayat chat hanya di memori halaman dan terpisah per agent. Pesan serta briefing dikirim ke penyedia AI ketika chat dijalankan; jangan memasukkan secret.
+
+Chat ini membantu menyusun pekerjaan, bukan worker yang bisa menulis kode, deploy, mengirim email, atau menjalankan kampanye. Pernyataan selesai harus didukung catatan/bukti; balasan AI sendiri bukan bukti implementasi.
+
+## Laporan terjadwal
+
+Laporan proyek berkala dikonfigurasi melalui Automations ChatGPT dan Gmail di luar aplikasi. Laporan membaca bukti repository/deployment dan target yang ada di kode. Briefing lokal browser tidak dapat dibaca oleh laporan email. Alamat penerima dan identitas automation tidak dipublikasikan pada halaman kantor atau repository. Keberhasilan penjadwalan tidak berarti email telah terkirim atau worker pengembangan berjalan otomatis.

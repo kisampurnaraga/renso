@@ -61,3 +61,9 @@ Added public read-only team workspace at `/#/team`: Indonesian/English, task cou
 ## Office visualization (2026-10-08)
 
 Added lazy-loaded 3D team office with eight original block characters and per-team desks, raycast selection, accessible agent buttons, task filtering, orbit/zoom/reset controls, and a selectable light mode. Office visuals do not represent runtime telemetry. Build passes. Local Chromium checks exercise WebGL rendering, agent task filtering, reset camera, light mode selection and return to 3D, language persistence, service failures, search, navigation and mobile overflow. Mobile and desktop office screenshots visually inspected. Physical phone performance remains unverified.
+
+## Team chat and role targets (2026-10-08)
+
+Added `/api/team/chat` for eight roles, backed by the active provider and a canonical public snapshot shared with the UI. Selected-role targets and task evidence enter the system context; custom user briefing remains user-role context. Sessions, origin checks, quotas, bounded history and sanitized failures are enforced; provider failures refund quota, and offline mode never fabricates replies. Build and 35 backend tests pass.
+
+Local Chromium mobile/desktop checks with mocked team-chat responses pass: role selection, saved briefing sent to the right role, isolated conversation histories, English requests, failure draft retention, conversation clearing, briefing persistence after reload, no overflow and no page errors. This verifies the UI/API boundary, not a production Groq team-chat response. An external ChatGPT Automation was created for project reports every three hours; no claim of completed recurring email delivery or continuous development workers.
