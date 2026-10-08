@@ -8,9 +8,9 @@ type Props = {
   onMusicOnlyChange: (only: boolean) => void;
 };
 const rooms: { id: MusicPreset; mood: 'blue' | 'green' | 'red'; icon: string; title: string; detail: string }[] = [
-  { id: 'ambient', mood: 'blue', icon: '☁', title: 'Awan pelan', detail: 'Ambient lembut · temani jedamu' },
-  { id: 'lofi', mood: 'green', icon: '♫', title: 'Sudut nyaman', detail: 'Lo-fi instrumental · ritme santai' },
-  { id: 'bright', mood: 'red', icon: '☀', title: 'Sinar kecil', detail: 'Nada ceria · tambah warna harimu' },
+  { id: 'ambient', mood: 'blue', icon: '☁', title: 'Awan pelan', detail: 'Pad mengalun · tanpa ketukan' },
+  { id: 'lofi', mood: 'green', icon: '♫', title: 'Sudut nyaman', detail: 'Bass hangat · beat santai' },
+  { id: 'bright', mood: 'red', icon: '☀', title: 'Sinar kecil', detail: 'Melodi ceria · perkusi ringan' },
 ];
 
 export default function MoodRoom({ onMoodChange, onPlaybackChange, onMusicOnlyChange }: Props) {
