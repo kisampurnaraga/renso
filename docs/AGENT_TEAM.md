@@ -8,13 +8,14 @@ Pembagian berikut dapat digunakan untuk sprint selanjutnya; peran tidak berarti 
 
 | Peran | Tanggung jawab | Hasil yang dapat diperiksa |
 |---|---|---|
-| Product / koordinator | Menentukan prioritas dan batas fitur, menyatukan hasil tim | Spesifikasi, daftar tugas, keputusan sprint |
+| Arsitek & Release Lead | Arsitektur, dependensi lintas tim, hambatan dan kesiapan sampai rilis | Rencana versi, briefing per tim, keputusan go/no-go dan bukti rilis |
+| Product Research | Kebutuhan pengguna, hipotesis, riset dan rekomendasi prioritas | Rencana wawancara, ukuran keberhasilan, temuan berbukti |
 | Frontend / pengalaman | Mood Room, gradien ceria, avatar, responsif, aksesibilitas | Komponen dan alur yang dapat dicoba |
 | Audio | Musik original/prosedural, kontrol volume, jeda, penghentian | Pemutar dan pemeriksaan perilaku audio |
 | Kamera / interaksi | Izin kamera, pemrosesan lokal, landmark, konfirmasi suasana | Pemindaian opsional tanpa diagnosis |
 | Backend / AI | Agent percakapan, batas penggunaan, sesi, integrasi layanan | API dan konfigurasi yang teruji |
 | QA / auditor | Menguji HP dan desktop, kegagalan izin, audio, privasi, regresi | Catatan hasil dan masalah prioritas |
-| Marketing / riset | Menyiapkan pilot dan menganalisis masukan dengan persetujuan | Rencana segmen dan temuan berbasis data |
+| Manajer Marketing | Segmentasi, positioning, kanal, pilot dan metrik pemasaran | Rencana pilot, draft kampanye dan batas biaya |
 | Content | Naskah, storyboard, materi demonstrasi produk | Draft yang siap ditinjau |
 | Growth / analitik | Mendefinisikan peristiwa, retensi, eksperimen harga | Definisi metrik dan laporan eksperimen |
 | Support / operasional | Panduan penggunaan, FAQ, pengelompokan masalah | Draft jawaban dan daftar masalah |
@@ -39,3 +40,5 @@ Pembagian berikut dapat digunakan untuk sprint selanjutnya; peran tidak berarti 
 ## Prioritas tim berikutnya
 
 Pertama, selesaikan Mood Room dan pemindaian opsional yang nyaman digunakan. Berikutnya, tim Marketing, Content, dan Growth menyiapkan pilot sesuai [rencana uji pasar](GO_TO_MARKET.md). Tim Support menyiapkan FAQ sebelum peserta masuk. Rekrutmen dan publikasi dimulai setelah ada instruksi dan produk siap diuji.
+
+Panduan penanggung jawab sampai rilis dan aktivasi peran: [RELEASE_PLAYBOOK.md](RELEASE_PLAYBOOK.md).

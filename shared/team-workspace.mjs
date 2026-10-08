@@ -1,19 +1,30 @@
 const repository = 'https://github.com/kisampurnaraga/renso';
-const updatedAt = '2026-10-08T10:20:00Z';
+const updatedAt = '2026-10-08T11:50:00Z';
 const source = (path) => `${repository}/blob/main/${path}`;
 export const TEAM_WORKSPACE = {
     updatedAt,
     teams: [
+        { id: 'architect', name: { id: 'Arsitek & Release Lead', en: 'Architecture & Release Lead' }, role: { id: 'Arsitektur, koordinasi lintas tim, hambatan, dan kesiapan rilis', en: 'Architecture, cross-team coordination, blockers, and release readiness' }, availability: 'on-demand' },
         { id: 'backend', name: { id: 'Backend & AI', en: 'Backend & AI' }, role: { id: 'Chat, sesi, dan integrasi layanan', en: 'Chat, sessions, and service integration' }, availability: 'on-demand' },
         { id: 'experience', name: { id: 'Pengalaman emosional', en: 'Emotional experience' }, role: { id: 'Sambutan, pilihan pengguna, dan percakapan', en: 'Welcome, user choice, and conversation' }, availability: 'on-demand' },
         { id: 'audio', name: { id: 'Musik & audio', en: 'Music & audio' }, role: { id: 'Musik, kontrol suara, dan transisi', en: 'Music, audio controls, and transitions' }, availability: 'on-demand' },
         { id: 'visual', name: { id: 'Avatar & ruang', en: 'Avatar & rooms' }, role: { id: 'Karakter, aktivitas, dan tampilan', en: 'Character, activities, and visuals' }, availability: 'on-demand' },
         { id: 'scanner', name: { id: 'Scanner ekspresi', en: 'Expression scanner' }, role: { id: 'Gerak wajah lokal dan konfirmasi pengguna', en: 'Local face movement and user confirmation' }, availability: 'on-demand' },
         { id: 'qa', name: { id: 'Pengujian', en: 'Quality checks' }, role: { id: 'Tes, verifikasi, dan batas bukti', en: 'Tests, verification, and evidence limits' }, availability: 'on-demand' },
-        { id: 'marketing', name: { id: 'Product & Marketing', en: 'Product & Marketing' }, role: { id: 'Uji kebutuhan dan rencana pilot', en: 'Needs research and pilot planning' }, availability: 'planned' },
+        { id: 'marketing', name: { id: 'Manajer Marketing', en: 'Marketing Manager' }, role: { id: 'Segmentasi, positioning, rencana pilot, dan metrik pemasaran', en: 'Segmentation, positioning, pilot plans, and marketing metrics' }, availability: 'on-demand' },
+        { id: 'research', name: { id: 'Product Research', en: 'Product Research' }, role: { id: 'Riset kebutuhan, hipotesis produk, dan rekomendasi prioritas', en: 'Needs research, product hypotheses, and priority recommendations' }, availability: 'on-demand' },
         { id: 'community', name: { id: 'Komunitas', en: 'Community' }, role: { id: 'Kontribusi open source dan kolaborasi', en: 'Open source contributions and collaboration' }, availability: 'planned' },
     ],
     tasks: [
+        { id:'release-plan', teamId:'architect', status:'queued', updatedAt,
+          title:{id:'Rencana rilis dan dependensi lintas tim',en:'Release plan and cross-team dependencies'},
+          detail:{id:'Susun lingkup versi, tugas dengan penanggung jawab, dependensi, hambatan, serta keputusan go/no-go dengan bukti QA dan deployment. Belum ada rilis baru dari peran ini.',en:'Define version scope, accountable tasks, dependencies, blockers, and go/no-go decisions with QA and deployment evidence. No new release from this role yet.'},
+          evidence:[{label:'Release responsibilities',url:source('docs/RELEASE_PLAYBOOK.md')}] },
+        { id:'product-research-plan', teamId:'research', status:'queued', updatedAt,
+          title:{id:'Rencana riset kebutuhan dan hipotesis produk',en:'Needs research and product hypotheses'},
+          detail:{id:'Siapkan lima pertanyaan wawancara, tiga hipotesis kebutuhan dan kriteria prioritas. Pisahkan asumsi dari temuan; belum ada wawancara atau data pengguna baru.',en:'Prepare five interview questions, three needs hypotheses, and prioritization criteria. Separate assumptions from findings; no new interviews or user data yet.'},
+          evidence:[{label:'Research responsibilities',url:source('docs/RELEASE_PLAYBOOK.md')}] },
+
         {
             id: 'owner-task-queue', teamId: 'backend', status: 'done', updatedAt,
             title: {id:'Antrean tugas dengan login pemilik',en:'Owner-authenticated task queue'},
@@ -34,7 +45,7 @@ export const TEAM_WORKSPACE = {
         },
         {
             id: 'office-workspace', teamId: 'visual', status: 'done', updatedAt,
-            title: { id: 'Kantor tim 3D dengan delapan agent', en: '3D team office with eight agents' },
+            title: { id: 'Kantor tim 3D dengan sepuluh agent', en: '3D team office with ten agents' },
             detail: { id: 'Karakter balok original, meja per tim, pilihan agent untuk menyaring tugas, kamera putar/zoom, serta mode ringan. Kantor menggambarkan peran tim, bukan bukti aktivitas agent langsung.', en: 'Original block characters, team desks, agent selection to filter tasks, rotate/zoom controls, and light mode. The office visualizes team roles, not live agent execution.' },
             evidence: [{ label: '3D office implementation', url: source('src/TeamOffice.tsx') }, { label: 'Workspace guide', url: source('docs/TEAM_WORKSPACE.md') }],
         },

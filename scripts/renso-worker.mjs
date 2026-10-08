@@ -2,9 +2,10 @@ import { readFile, writeFile, lstat, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { TEAM_WORKSPACE } from '../shared/team-workspace.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const TEAMS = new Set(['backend', 'experience', 'audio', 'visual', 'scanner', 'qa', 'marketing', 'community']);
+const TEAMS = new Set(TEAM_WORKSPACE.teams.map(team => team.id));
 const DENIED = /(?:^server\/(?:store|app|provider|team-chat)\.mjs$)|(?:^|\/)(?:job[^/]*|owner[^/]*|auth[^/]*|session[^/]*)\.(?:mjs|js|ts|tsx)$/i;
 const ALLOWED = /^(?:src|server|shared|docs)\/[a-zA-Z0-9_./-]+\.(?:ts|tsx|js|mjs|mts|css|md|json)$/;
 export function orderContextFiles(names, team, instructions) {
@@ -14,6 +15,8 @@ export function orderContextFiles(names, team, instructions) {
     scanner: /aura|face|expression/i, backend: /^server\//,
     qa: /test\.|validation/i, marketing: /go_to_market|agent_team|demo/i,
     community: /community|team-workspace/i,
+    architect: /release|architecture|agent_team|validation|team-workspace|team-roles/i,
+    research: /research|go_to_market|release_playbook|agent_team/i,
   }[team] || /^src\//;
   const words = instructions.toLowerCase().split(/[^a-z0-9_-]+/).filter(word=>word.length>3);
   const score = name => (instructions.includes(name)?1000:0) + (focus.test(name)?100:0) + (name.startsWith('src/')?20:0) + (name.startsWith('shared/')?10:0) + Math.min(20,words.filter(word=>name.toLowerCase().includes(word)).length*5);

@@ -90,3 +90,16 @@ test('offline team chat is explicit unavailable without fake agent replies', asy
   assert.equal(response.json().reply, undefined);
   assert.equal(calls, 0);
 });
+
+test('architect sees cross-team evidence while research remains scoped and all new roles can chat', async t => {
+  const { teamChatMessages } = await import('./team-chat.mjs');
+  const architect = teamChatMessages({team:'architect',language:'id',message:'Susun rencana rilis'})[0].content;
+  assert.ok(architect.includes('music-presets'));
+  assert.ok(architect.includes('physical-scanner-validation'));
+  assert.ok(architect.includes('go/no-go'));
+  const research = teamChatMessages({team:'research',language:'id',message:'Susun riset'})[0].content;
+  assert.ok(research.includes('product-research-plan'));
+  assert.ok(!research.includes('music-presets'));
+  const { chat } = await fixture(t, async () => success(), {DAILY_CHAT_LIMIT:'10'});
+  for(const team of ['architect','research','marketing']) assert.equal((await chat({...body,team})).statusCode,200);
+});
