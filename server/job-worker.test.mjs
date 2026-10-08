@@ -4,7 +4,16 @@ import { mkdtemp, mkdir, symlink, rm, readFile, writeFile } from 'node:fs/promis
 import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
-import { validateEdits, parseModelResponse, safeDestination } from '../scripts/renso-worker.mjs';
+import { validateEdits, parseModelResponse, safeDestination, orderContextFiles } from '../scripts/renso-worker.mjs';
+
+test('worker prioritizes task implementation over documentation and excludes protected files', () => {
+  const names=['docs/ARCHITECTURE.md','src/App.tsx','src/music-engine.ts','src/MoodRoom.tsx','server/app.mjs','.env','src/Avatar.tsx'];
+  const audio=orderContextFiles(names,'audio','Smooth music');
+  assert.deepEqual(new Set(audio.slice(0,2)),new Set(['src/music-engine.ts','src/MoodRoom.tsx']));
+  assert.ok(audio.indexOf('src/App.tsx')<audio.indexOf('docs/ARCHITECTURE.md'));
+  assert.ok(!audio.includes('server/app.mjs')&&!audio.includes('.env'));
+  assert.equal(orderContextFiles(names,'visual','Improve avatar')[0],'src/Avatar.tsx');
+});
 
 test('worker accepts bounded text edits and fenced JSON', () => {
   const value = { summary: 'Improve music controls', files: [{ path: 'src/AudioPanel.tsx', content: 'export const value = 1;' }] };
