@@ -4,6 +4,8 @@ Teman AI dengan karakter balok 3D, aura interaktif, audio, dan langkah kecil unt
 
 Repository: https://github.com/kisampurnaraga/renso
 
+Ruang tim tersedia di `/#/team`. Chat menyusun pekerjaan; antrean pemilik dapat menyimpan tugas di Neon dan mengirimkannya ke worker GitHub Actions untuk membuat draft PR beserta validasi. Konfigurasi akses pemilik dan worker wajib diaktifkan sebelum digunakan: [AGENT_WORKER.md](docs/AGENT_WORKER.md).
+
 ## Status v0.1
 
 Fondasi MVP yang dapat dijalankan lokal. **Belum merupakan layanan produksi berbayar.**

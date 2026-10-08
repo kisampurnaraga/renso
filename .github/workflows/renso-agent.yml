@@ -1,0 +1,104 @@
+name: Renso task worker
+run-name: renso-task-${{ inputs.job_id }}
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: Persisted Renso job UUID
+        required: true
+      team:
+        description: Renso team role
+        required: true
+      title:
+        description: Task title (public)
+        required: true
+      instructions:
+        description: Task instructions (public; never include secrets)
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: renso-task-${{ inputs.job_id }}
+  cancel-in-progress: false
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    outputs:
+      base_sha: ${{ steps.base.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Generate bounded edits
+        run: node scripts/renso-worker.mjs generate
+        env:
+          JOB_ID: ${{ inputs.job_id }}
+          JOB_TEAM: ${{ inputs.team }}
+          JOB_TITLE: ${{ inputs.title }}
+          JOB_INSTRUCTIONS: ${{ inputs.instructions }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renso-edits
+          path: renso-edits.json
+          retention-days: 7
+  verify:
+    needs: generate
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.generate.outputs.base_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v4
+        with:
+          name: renso-edits
+      - run: npm ci
+      - name: Apply validated text edits
+        run: node scripts/renso-worker.mjs apply
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renso-review-diff
+          path: renso-review.diff
+          retention-days: 7
+  publish:
+    needs: [generate, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.generate.outputs.base_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v4
+        with:
+          name: renso-edits
+      - name: Create review branch and draft PR
+        run: node scripts/renso-worker.mjs publish
+        env:
+          BASE_SHA: ${{ needs.generate.outputs.base_sha }}
+          JOB_ID: ${{ inputs.job_id }}
+          JOB_TEAM: ${{ inputs.team }}
+          JOB_TITLE: ${{ inputs.title }}
+          JOB_INSTRUCTIONS: ${{ inputs.instructions }}
+          GH_TOKEN: ${{ github.token }}

@@ -71,3 +71,11 @@ Local Chromium mobile/desktop checks with mocked team-chat responses pass: role 
 ## Nested team route fix (2026-10-08)
 
 User screenshot showed a non-JSON platform response when calling nested `/api/team/chat`. Added explicit Vercel function `api/team/chat.js` forwarding to the same Fastify handler, with a 60-second duration. This avoids relying on Next.js-style multi-segment catch-all semantics in the standalone Vite project. Team frontend now checks content type and handles malformed JSON without exposing parser errors or upstream text. Build and 36 tests pass, including local HTTP invocation through the explicit nested entry point. Browser regression checks cover plaintext 404 and malformed JSON while preserving the user's draft. Production chat response still requires verification after deployment.
+
+## Owner queue and worker (2026-10-08)
+
+Owner-authenticated queue routes use signed eight-hour cookies, bounded validated instructions and a separate Neon job table. Fixed-repository dispatch atomically claims queued jobs; uncertain dispatch failures cannot be sent twice. Status synchronization requires observed GitHub runs and open draft PRs with validated evidence URLs. Missing queue migration does not prevent existing guest chat from starting.
+
+The worker uses three isolated Actions jobs: generate with Groq, verify without provider/write credentials, and publish a draft PR without executing generated code. Path, symlink, text, edit size and duplicate checks protect the artifact boundary. New files appear in review diffs; no-op changes fail explicitly. Local backend/worker suite: 49 tests pass. TypeScript and frontend build pass.
+
+Local Chromium checks with mocked queue endpoints pass owner login, no key in localStorage, briefing transfer, explicit save without dispatch, dispatch/status/PR controls, malformed upstream handling, logout hiding private jobs and mobile overflow checks. These are local UI/API tests, not a real Neon insert or live Groq worker execution. Production queue activation still requires migration, OWNER_ACCESS_KEY, GITHUB_DISPATCH_TOKEN, GitHub Actions GROQ_API_KEY and repository PR permission. The user's production team-chat screenshot independently confirms an AI reply; it does not prove worker execution.

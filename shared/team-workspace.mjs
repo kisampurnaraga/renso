@@ -1,5 +1,5 @@
 const repository = 'https://github.com/kisampurnaraga/renso';
-const updatedAt = '2026-10-08T08:04:20Z';
+const updatedAt = '2026-10-08T10:20:00Z';
 const source = (path) => `${repository}/blob/main/${path}`;
 export const TEAM_WORKSPACE = {
     updatedAt,
@@ -15,9 +15,21 @@ export const TEAM_WORKSPACE = {
     ],
     tasks: [
         {
+            id: 'owner-task-queue', teamId: 'backend', status: 'done', updatedAt,
+            title: {id:'Antrean tugas dengan login pemilik',en:'Owner-authenticated task queue'},
+            detail: {id:'Kode penyimpanan tugas Neon, login pemilik, dispatch tetap ke GitHub Actions, serta pemeriksaan status dan draft PR tersedia. Ketersediaan produksi bergantung pada migrasi dan konfigurasi pemilik.',en:'Neon job storage, owner login, fixed GitHub Actions dispatch, and actual run/draft PR synchronization are implemented. Production availability depends on owner configuration and migration.'},
+            evidence: [{label:'Queue implementation',url:source('server/job-queue.mjs')},{label:'Owner panel',url:source('src/TeamJobQueue.tsx')}],
+        },
+        {
+            id: 'worker-activation', teamId: 'backend', status: 'validation', updatedAt,
+            title: {id:'Aktivasi dan uji worker produksi',en:'Production worker activation and test'},
+            detail: {id:'Workflow Groq menghasilkan perubahan terbatas, menjalankan tes/build, lalu membuat draft PR. Migrasi Neon, akses pemilik, token dispatch dan secret Groq GitHub harus dipasang; belum ada eksekusi worker produksi yang terverifikasi.',en:'The Groq workflow generates bounded edits, runs tests/build, and creates a draft PR. Neon migration, owner access, dispatch token and GitHub Groq secret are required; no production worker execution is verified yet.'},
+            evidence: [{label:'Activation guide',url:source('docs/AGENT_WORKER.md')},{label:'Worker workflow',url:source('.github/workflows/renso-agent.yml')}],
+        },
+        {
             id: 'role-chat', teamId: 'backend', status: 'done', updatedAt: '2026-10-08T08:16:17Z',
             title: {id:'Chat agent berdasarkan job desk dan target',en:'Role-based agent chat and targets'},
-            detail: {id:'Endpoint chat per tim memakai target, snapshot tugas, sesi, dan kuota bersama. Build, 35 tes backend, dan pengujian UI dengan respons mock lulus; chat tim Groq produksi masih perlu dicoba pengguna.',en:'Team chat uses targets, task snapshots, sessions, and shared quotas. Build, 35 backend tests, and mocked UI checks pass; users still need to try team chat with production Groq.'},
+            detail: {id:'Endpoint chat per tim memakai target, snapshot tugas, sesi, dan kuota bersama. Pengguna telah menerima balasan chat tim produksi pada 8 Oktober. Balasan menyusun arahan; eksekusi membutuhkan antrean pemilik.',en:'Team chat uses targets, task snapshots, sessions, and shared quotas. The user received a production team chat reply on October 8. Replies prepare briefs; execution requires the owner queue.'},
             evidence: [{label:'Team chat backend',url:source('server/team-chat.mjs')},{label:'Role targets',url:source('shared/team-roles.mjs')}],
         },
         {

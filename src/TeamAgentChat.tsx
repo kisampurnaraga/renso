@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { TEAM_WORKSPACE } from './team-workspace-data';
 import { TEAM_TARGETS } from '../shared/team-roles.mjs';
+import TeamJobQueue from './TeamJobQueue';
 
 type Props={teamId:string;language:'id'|'en'};
 type Message={role:'user'|'assistant';content:string};
@@ -63,5 +64,6 @@ export default function TeamAgentChat({teamId,language}:Props){
     <form onSubmit={event=>{event.preventDefault();void send();}}><label htmlFor="agent-message">{english?'Message to agent':'Pesan untuk agent'}</label><textarea id="agent-message" rows={3} maxLength={2000} value={drafts[teamId]||''} onChange={event=>setDrafts(previous=>({...previous,[teamId]:event.target.value}))} placeholder={english?'Discuss Renso work…':'Diskusikan pekerjaan Renso…'}/><div><span>{(drafts[teamId]||'').length}/2000</span><button disabled={busy!==null||!(drafts[teamId]||'').trim()} type="submit">{english?'Send':'Kirim'}</button></div></form>
     <button className="agent-clear" disabled={busy!==null} onClick={()=>{setThreads(previous=>({...previous,[teamId]:[]}));setErrors(previous=>({...previous,[teamId]:''}));}}>{english?'Clear this conversation':'Hapus percakapan ini'}</button></div></div>
     <p className="agent-chat-note">{english?'Messages and saved briefs are sent to the AI provider when you chat. Conversation history stays in page memory. This chat does not edit code, publish campaigns, or automatically execute jobs; AI replies are proposals, not proof of delivery. The chat shares your session usage allowance with Renso.':'Pesan dan briefing terkirim ke penyedia AI saat kamu chat. Riwayat percakapan hanya di memori halaman. Chat ini tidak mengubah kode, menerbitkan kampanye, atau otomatis mengeksekusi pekerjaan; jawaban AI adalah usulan, bukan bukti hasil. Kuota chat berbagi dengan sesi Renso.'}</p>
+    <TeamJobQueue teamId={teamId} language={language} suggestedInstructions={[edited[teamId]??briefs[teamId]?.text??'', (threads[teamId]||[]).filter(item=>item.role==='user').at(-1)?.content||drafts[teamId]||''].filter(Boolean).join('\n\n')}/>
   </section>;
 }

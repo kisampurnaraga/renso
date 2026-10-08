@@ -14,11 +14,11 @@ Karakter adalah representasi visual peran tim. Animasi diam dan keberadaan model
 
 ## Batas sumber data
 
-Papan tugas bersumber dari `shared/team-workspace.mjs` (sumber bersama frontend dan backend), diperbarui koordinator melalui commit dan deployment. Ini **bukan** telemetry pelaksanaan agent. Angka kartu menghitung tugas dalam catatan, bukan jam kerja, produktivitas, atau pendapatan. Tidak ada worker agent 24/7, tombol dispatch, atau sinkronisasi otomatis dengan sesi Codex/GitHub Issues.
+Papan tugas publik bersumber dari `shared/team-workspace.mjs` (sumber bersama frontend dan backend), diperbarui koordinator melalui commit dan deployment. Angka kartu menghitung tugas dalam catatan, bukan jam kerja, produktivitas, atau pendapatan. Antrean pemilik adalah panel terpisah dengan data Neon dan bukti GitHub Actions; bukan sinkronisasi otomatis dengan sesi Codex.
 
 `/api/status` membuktikan aplikasi merespons dan konfigurasi terbaca; tidak menjalankan percakapan Groq atau membuktikan setiap request berhasil. Keberhasilan chat produksi dicatat berdasarkan pengujian pengguna pada 8 Oktober 2026.
 
-Halaman publik hanya menampilkan informasi proyek. Jangan menambahkan secret, isi percakapan, data pribadi peserta pilot, atau log sensitif pada dataset. Ruang pemilik privat dan dispatch agent memerlukan autentikasi/otorisasi serta layanan worker pada pengembangan berikutnya.
+Halaman publik hanya menampilkan informasi proyek. Jangan menambahkan secret, isi percakapan, data pribadi peserta pilot, atau log sensitif pada dataset. Login pemilik diperlukan untuk menyimpan, membaca, dan menjalankan antrean tugas. Aktivasi database, akses pemilik, token dispatch dan worker dijelaskan di [AGENT_WORKER.md](AGENT_WORKER.md).
 
 ## Memperbarui pekerjaan
 
@@ -37,6 +37,8 @@ Pilih agent kantor, lalu gunakan Chat agent. Setiap peran memiliki target tahap 
 Arahan tambahan dapat berisi hasil, kriteria berhasil, dan tenggat. Simpan briefing menyimpannya hanya pada browser ini. Briefing disertakan sebagai konteks user pada permintaan chat, bukan perubahan system prompt, target bersama, atau bukti pekerjaan selesai. Riwayat chat hanya di memori halaman dan terpisah per agent. Pesan serta briefing dikirim ke penyedia AI ketika chat dijalankan; jangan memasukkan secret.
 
 Chat ini membantu menyusun pekerjaan, bukan worker yang bisa menulis kode, deploy, mengirim email, atau menjalankan kampanye. Pernyataan selesai harus didukung catatan/bukti; balasan AI sendiri bukan bukti implementasi.
+
+Untuk implementasi, tinjau arahan di panel antrean pemilik, simpan sebagai tugas, kemudian jalankan worker. Worker terpisah memakai Groq dan GitHub Actions untuk perubahan kode/dokumentasi yang dibatasi, tes, build dan draft PR. Status diperbarui dengan pemeriksaan hasil GitHub, bukan teks balasan chat. Penggabungan PR tetap ditinjau pemilik.
 
 ## Laporan terjadwal
 

@@ -6,6 +6,7 @@ import { agents, moods, systemPrompt, demoReply } from './agents.mjs';
 import { createStore } from './store.mjs';
 import { providerConfig, createProvider, ProviderError } from './provider.mjs';
 import { teamChatSchema, teamChatMessages } from './team-chat.mjs';
+import { registerJobRoutes } from './job-queue.mjs';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
 export async function buildApp(options = {}) {
@@ -90,6 +91,7 @@ export async function buildApp(options = {}) {
       return {text:await provider.transcribe(request.body,type)};
     } catch(error) {await store.refund(id); return reply.code(error instanceof ProviderError && error.status === 429 ? 429 : 503).send({error:error instanceof ProviderError && error.status === 429 ? 'Layanan suara sedang mencapai batas penggunaan. Coba ketik pesanmu.' : 'Rekaman belum bisa diproses. Coba ketik pesanmu.'});}
   });
+  await registerJobRoutes(app,env,options.jobs);
   app.setErrorHandler((error,_request,reply)=>{ reply.code(error.statusCode && error.statusCode < 500 ? error.statusCode : 500).send({error:error.validation?'Periksa isi pesanmu.':error.statusCode===429?'Terlalu banyak permintaan. Tunggu sebentar.':'Permintaan belum bisa diproses.'}); });
   return app;
 }
