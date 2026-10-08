@@ -4,6 +4,10 @@ Buka `/#/team` atau tautan **Ruang tim** pada header. Halaman publik tersedia da
 
 ## Yang bisa dipantau
 
+Kantor 3D menampilkan delapan karakter balok original, workstation, area duduk, tanaman, dan jendela. Pilih model/meja atau tombol nama agent untuk menampilkan ringkasan dan menyaring tugas tim. Geser untuk memutar kamera, cubit/scroll untuk zoom; tombol reset mengembalikan sudut awal. Mode ringan menyediakan pilihan karakter tanpa WebGL. Reduced motion mengikuti preferensi perangkat.
+
+Karakter adalah representasi visual peran tim. Animasi diam dan keberadaan model bukan indikator proses agent sedang berjalan. Musik/kamera/mikrofon tidak diaktifkan oleh kantor.
+
 - Delapan peran tim, tanggung jawab, serta apakah peran bekerja saat ditugaskan atau masih direncanakan.
 - Catatan tugas selesai, antrean, dan perlu validasi; filter, pencarian, tanggal pembaruan dalam WIB, dan tautan bukti kode/dokumentasi.
 - Status aplikasi dari `/api/status`, diperiksa saat masuk dan setiap 60 detik ketika halaman terlihat. Pengguna juga dapat memeriksa ulang. Kegagalan pemeriksaan ditampilkan sebagai tidak tersedia, bukan status sehat lama.

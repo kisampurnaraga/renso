@@ -18,7 +18,7 @@ export type WorkspaceTask = {
 }
 
 const repository = 'https://github.com/kisampurnaraga/renso'
-const updatedAt = '2026-10-08T07:54:36Z'
+const updatedAt = '2026-10-08T08:04:20Z'
 const source = (path: string) => `${repository}/blob/main/${path}`
 
 export const TEAM_WORKSPACE: {
@@ -38,6 +38,12 @@ export const TEAM_WORKSPACE: {
     { id: 'community', name: { id: 'Komunitas', en: 'Community' }, role: { id: 'Kontribusi open source dan kolaborasi', en: 'Open source contributions and collaboration' }, availability: 'planned' },
   ],
   tasks: [
+    {
+      id: 'office-workspace', teamId: 'visual', status: 'done', updatedAt,
+      title: { id: 'Kantor tim 3D dengan delapan agent', en: '3D team office with eight agents' },
+      detail: { id: 'Karakter balok original, meja per tim, pilihan agent untuk menyaring tugas, kamera putar/zoom, serta mode ringan. Kantor menggambarkan peran tim, bukan bukti aktivitas agent langsung.', en: 'Original block characters, team desks, agent selection to filter tasks, rotate/zoom controls, and light mode. The office visualizes team roles, not live agent execution.' },
+      evidence: [{ label: '3D office implementation', url: source('src/TeamOffice.tsx') }, { label: 'Workspace guide', url: source('docs/TEAM_WORKSPACE.md') }],
+    },
     {
       id: 'live-chat', teamId: 'backend', status: 'done', updatedAt: '2026-10-08T07:47:53Z',
       title: { id: 'Chat Groq dan sesi PostgreSQL', en: 'Groq chat and PostgreSQL sessions' },
