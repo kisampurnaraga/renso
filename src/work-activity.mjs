@@ -1,9 +1,9 @@
 export const WORK_ACTIVITIES = {
-  design: {label:'Desain', icon:'◈', tip:'Mulai dari satu bentuk atau satu pilihan warna.'},
-  coding: {label:'Coding', icon:'⌘', tip:'Buka satu file dan kerjakan satu fungsi kecil.'},
-  writing: {label:'Menulis', icon:'✎', tip:'Tulis satu kalimat dulu; rapikan nanti.'},
-  study: {label:'Belajar', icon:'▤', tip:'Baca satu bagian dan catat satu ide.'},
-  other: {label:'Aktivitas lain', icon:'✦', tip:'Pilih satu bagian paling ringan untuk dimulai.'}
+  design: {room:'Studio desain',assets:'Papan warna, tablet gambar, dan poster',label:'Desain', icon:'◈', tip:'Mulai dari satu bentuk atau satu pilihan warna.'},
+  coding: {room:'Ruang coding',assets:'Dua layar terminal dan komputer tower',label:'Coding', icon:'⌘', tip:'Buka satu file dan kerjakan satu fungsi kecil.'},
+  writing: {room:'Sudut menulis',assets:'Rak buku, notebook, dan lembar tulisan',label:'Menulis', icon:'✎', tip:'Tulis satu kalimat dulu; rapikan nanti.'},
+  study: {room:'Ruang belajar',assets:'Papan catatan, buku terbuka, dan alat tulis',label:'Belajar', icon:'▤', tip:'Baca satu bagian dan catat satu ide.'},
+  other: {room:'Ruang kerja umum',assets:'Meja dan perangkat kerja',label:'Aktivitas lain', icon:'✦', tip:'Pilih satu bagian paling ringan untuk dimulai.'}
 };
 export function detectWorkActivity(text) {
   const rules = [

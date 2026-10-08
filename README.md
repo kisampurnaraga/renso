@@ -97,3 +97,5 @@ Panduan pilot dan pembagian kerja agent tersedia di `docs/GO_TO_MARKET.md` dan `
 ## Kerja ditemani Renso
 
 Pilih Santai atau Ceria di kartu avatar, atau pilih musik Sinar kecil. Ceritakan aktivitas lewat kolom aktivitas atau chat. Desain, coding, menulis, dan belajar memiliki visual kantor 3D; aktivitas lain diberi label pengguna dengan ruang kerja umum. Pilihan laptop/komputer dan tombol Akhiri tersedia. Pemetaan aktivitas saat ini berbasis kata kunci lokal, bukan AI generatif pembuat adegan. Chat preview tetap demo. Mode ringan tetap dapat dipilih untuk perangkat yang kesulitan menampilkan 3D.
+
+Ruang aktivitas memiliki dekorasi tersendiri: studio desain, ruang coding, sudut menulis, dan ruang belajar. Nama ruang serta alat kerjanya ditampilkan di kartu avatar. Aktivitas yang belum dikenali tetap memakai ruang kerja umum.

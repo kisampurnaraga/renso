@@ -31,3 +31,7 @@ Replaced shared chord/arpeggio arrangement with separate ambient pads (no percus
 Mode Santai/Ceria asks for the current activity; choosing the bright music preset also opens the cheerful companion. Local keyword matching maps design/coding/writing/study descriptions to procedural scenes. Unmatched activities use an explicitly labeled generic workspace, not a newly generated custom scene. Laptop/desktop can be switched; work scene can be ended. No camera or task data uploads are required for this visualization. Preview replies remain scripted.
 
 Build and 13 tests pass. Local Chromium verifies bright-mode prompt, description-to-design, chat-to-coding, manual writing/study, generic fallback, laptop/desktop, calm mode, end/reset, and no mobile overflow. Design office scene visually inspected on mobile.
+
+## Distinct room assets (2026-10-08)
+
+Replaced the shared decor with activity-specific asset groups and palettes. All four mobile scene screenshots inspected: design easel/tablet/pinboard, coding second terminal/tower, writing tall bookcase/manuscript stack, study chalkboard/open book/book stack. Work-flow browser QA passes with no page errors or horizontal overflow. Generic activities remain explicitly generic. Scene selection uses local keyword mapping, not image/video generation.
