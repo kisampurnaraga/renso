@@ -4,9 +4,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as THREE from 'three';
 import { TEAM_WORKSPACE } from './team-workspace-data';
 
-type Props = {language:'id'|'en';selected:string;onSelect:(id:string)=>void;reduced:boolean;reset:number};
+type Props = {language:'id'|'en';selected:string;onSelect:(id:string)=>void;reduced:boolean;reset:number;division?:string;jobStatuses?:Record<string,string>};
 const outfits = ['#62a9ad','#797de1','#dc92b1','#eab25b','#6eb7b8','#83b889','#889bcf','#dd946c','#e397ba','#a18bca'];
-const stations:[number,number][] = [[-5.6,-2.9],[-2.8,-2.9],[0,-2.9],[2.8,-2.9],[5.6,-2.9],[-5.6,2],[-2.8,2],[0,2],[2.8,2],[5.6,2]];
 
 function Box({at,size,color}:{at:[number,number,number];size:[number,number,number];color:string}) {
   return <mesh position={at}><boxGeometry args={size}/><meshStandardMaterial color={color} roughness={.75}/></mesh>;
@@ -21,9 +20,13 @@ function Label({text,position,selected=false}:{text:string;position:[number,numb
   useEffect(()=>()=>texture.dispose(),[texture]);
   return <sprite position={position} scale={[2.5,.47,1]}><spriteMaterial map={texture} depthTest={false}/></sprite>;
 }
-function AgentModel({color,index,reduced}:{color:string;index:number;reduced:boolean}) {
+function AgentModel({color,index,reduced,working=false}:{color:string;index:number;reduced:boolean;working?:boolean}) {
   const body=useRef<THREE.Group>(null);
-  useFrame(({clock})=>{if(body.current)body.current.position.y=reduced?0:Math.sin(clock.elapsedTime*1.3+index)*.018;});
+  const leftHand=useRef<THREE.Group>(null),rightHand=useRef<THREE.Group>(null);
+  useFrame(({clock})=>{
+    if(body.current)body.current.position.y=0;
+    [leftHand.current,rightHand.current].forEach((hand,i)=>{if(hand)hand.rotation.x=working&&!reduced?-.6+Math.sin(clock.elapsedTime*9+i*Math.PI)*.12:0;});
+  });
   return <group ref={body} position={[0,0,0]}>
     <Box at={[0,1.66,0]} size={[.65,.65,.58]} color={['#efd3bb','#d3ae91','#b58a6d'][index%3]}/>
     <Box at={[0,2,0]} size={[.69,.13,.62]} color={index%2?'#544057':'#30354c'}/>
@@ -32,7 +35,7 @@ function AgentModel({color,index,reduced}:{color:string;index:number;reduced:boo
     <Box at={[0,1.49,.30]} size={[.12,.035,.022]} color="#936574"/>
     <Box at={[0,1.08,0]} size={[.62,.55,.4]} color={color}/>
     <Box at={[0,1.12,.21]} size={[.15,.13,.025]} color="#fff4db"/>
-    {[-1,1].map(side=><group key={side}><Box at={[side*.42,1.05,.11]} size={[.19,.48,.25]} color={color}/><Box at={[side*.42,.8,.16]} size={[.19,.16,.24]} color="#e1bea3"/><Box at={[side*.17,.58,.18]} size={[.23,.46,.27]} color="#40455d"/><Box at={[side*.17,.34,.30]} size={[.26,.13,.43]} color="#fff9ee"/></group>)}
+    {[-1,1].map(side=><group key={side}><group ref={side===-1?leftHand:rightHand} position={[side*.42,1.25,.11]}><Box at={[0,-.2,0]} size={[.19,.48,.25]} color={color}/><Box at={[0,-.45,.05]} size={[.19,.16,.24]} color="#e1bea3"/></group><Box at={[side*.17,.58,.18]} size={[.23,.46,.27]} color="#40455d"/><Box at={[side*.17,.34,.30]} size={[.26,.13,.43]} color="#fff9ee"/></group>)}
     {index===3?<><Box at={[-.37,1.72,0]} size={[.13,.34,.32]} color="#584877"/><Box at={[.37,1.72,0]} size={[.13,.34,.32]} color="#584877"/><Box at={[0,2.1,0]} size={[.74,.08,.14]} color="#584877"/></>:null}
     {index===1||index===6?<><Box at={[0,1.71,.33]} size={[.52,.025,.03]} color="#655679"/>{[-.14,.14].map(x=><Box key={x} at={[x,1.69,.33]} size={[.17,.13,.03]} color="#655679"/>)}</>:null}
   </group>;
@@ -69,26 +72,51 @@ function Controls({reset}:{reset:number}) {
   return null;
 }
 function OfficeScene(props:Props) {
+  const teams=TEAM_WORKSPACE.teams.filter(team=>!props.division || (team as typeof team & {divisionId?:string}).divisionId===props.division);
+  const columns=Math.min(3,Math.max(1,teams.length));
+  const rows=Math.ceil(teams.length/columns);
+  const depth=Math.max(9,rows*3.1+4);
+  const loungeZ=depth/2-1.3;
   return <>
     <color attach="background" args={['#eee8fa']}/><ambientLight intensity={1.1}/><directionalLight position={[8,14,10]} intensity={1.6}/><directionalLight position={[-8,8,-8]} intensity={.6} color="#bbd3ff"/>
-    <Box at={[0,-.18,0]} size={[16.4,.35,10]} color="#e9d9c8"/>
-    <Box at={[0,1.6,-4.95]} size={[16.4,3.55,.18]} color="#e5dcef"/>
-    <Box at={[-8.15,1.6,0]} size={[.18,3.55,10]} color="#f0e6f0"/>
-    {[-4.7,-1.7,1.7,4.7].map(x=><group key={x}><Box at={[x,2.3,-4.82]} size={[2.25,1.5,.06]} color="#aacbdc"/><Box at={[x,2.3,-4.76]} size={[.06,1.5,.05]} color="#fff6e9"/><Box at={[x,2.3,-4.76]} size={[2.25,.06,.05]} color="#fff6e9"/></group>)}
-    <Box at={[-6.7,1.9,-.15]} size={[.08,1.1,2.4]} color="#bba7d4"/>
-    <Label text="RENSO · STUDIO" position={[0,3.7,-4.7]}/>
-    <Box at={[0,.015,-.1]} size={[9.8,.025,1.1]} color="#d6c9ea"/>
-    <Box at={[5.2,.33,4.06]} size={[2.1,.56,.73]} color="#a6c9c5"/><Box at={[5.2,.67,4.36]} size={[2.1,.65,.14]} color="#a6c9c5"/>
-    <Box at={[2.9,.32,4.05]} size={[1.35,.5,.8]} color="#f1c7ac"/>
-    <Box at={[-4.8,.9,4.6]} size={[1.8,1.8,.42]} color="#bba5c9"/>
-    {[0,1,2].map(i=><Box key={i} at={[-4.8,.3+i*.6,4.34]} size={[1.62,.07,.1]} color="#f6e8d9"/>)}
-    <Plant at={[-6.15,0,-4.15]}/><Plant at={[6.1,0,-4.1]}/><Plant at={[.5,0,4.4]}/>
-    {TEAM_WORKSPACE.teams.map((team,index)=>{const [x,z]=stations[index],selected=props.selected===team.id;return <group key={team.id} position={[x,0,z]} onClick={event=>{event.stopPropagation();props.onSelect(team.id);}}>
-      <mesh position={[0,.012,.3]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[2.65,2.9]}/><meshStandardMaterial color={selected?'#c9b4ef':index%2?'#eadce8':'#e4e0f3'}/></mesh>
-      {selected?<mesh position={[0,.04,0]} rotation={[-Math.PI/2,0,0]}><ringGeometry args={[.67,.73,32]}/><meshBasicMaterial color="#8f61bf" side={THREE.DoubleSide}/></mesh>:null}
-      <Desk index={index} color={outfits[index]}/><AgentModel color={outfits[index]} index={index} reduced={props.reduced}/>
-      <Label text={team.name[props.language]} position={[0,2.7,0]} selected={selected}/>
-    </group>;})}
+    <Box at={[0,-.18,0]} size={[14,.35,depth]} color="#e9d9c8"/>
+    <Box at={[0,1.6,-depth/2]} size={[14,3.55,.18]} color="#e5dcef"/>
+    <Box at={[-7,1.6,0]} size={[.18,3.55,depth]} color="#f0e6f0"/>
+    {[-4,0,4].map(x=><group key={x}><Box at={[x,2.3,-depth/2+.12]} size={[2.25,1.5,.06]} color="#aacbdc"/><Box at={[x,2.3,-depth/2+.18]} size={[.06,1.5,.05]} color="#fff6e9"/><Box at={[x,2.3,-depth/2+.18]} size={[2.25,.06,.05]} color="#fff6e9"/></group>)}
+    <Label text="RENSO · STUDIO" position={[0,3.7,-depth/2+.2]}/>
+    <Box at={[0,.03,loungeZ-1.15]} size={[13,.05,.15]} color="#bda8d5"/>
+    <Box at={[-5.7,.7,loungeZ-1.15]} size={[.13,1.4,1.3]} color="#bda8d5"/>
+    <Box at={[5.7,.7,loungeZ-1.15]} size={[.13,1.4,1.3]} color="#bda8d5"/>
+    <Label text={props.language==='id'?'RUANG ISTIRAHAT':'REST LOUNGE'} position={[0,2.5,loungeZ+.7]}/>
+    <Box at={[0,.02,loungeZ]} size={[12,.025,2.2]} color="#d9e7df"/>
+    {teams.map((team,index)=>{
+      const x=(index%columns-(columns-1)/2)*3.6;
+      const z=-depth/2+1.3+Math.floor(index/columns)*3.1;
+      const selected=props.selected===team.id;
+      const status=props.jobStatuses?.[team.id] || 'unknown';
+      const working=status==='running';
+      const waiting=status==='queued'||status==='dispatched';
+      const resting=['idle','completed','review_ready','done','failed','cancelled'].includes(status);
+      const color=outfits[index%outfits.length];
+      const metadata=team as typeof team & {agentName?:string};
+      const name=metadata.agentName || team.name[props.language];
+      const state=props.language==='id'?(working?'Bekerja':waiting?'Menunggu worker':resting?'Istirahat':'Status belum tersedia'):(working?'Working':waiting?'Waiting for worker':resting?'Resting':'Status unavailable');
+      const loungeX=(index-(teams.length-1)/2)*Math.min(1.65,10/Math.max(1,teams.length));
+      return <group key={team.id} onClick={event=>{event.stopPropagation();props.onSelect(team.id);}}>
+        <group position={[x,0,z]}>
+          <mesh position={[0,.012,.3]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[3.3,2.9]}/><meshStandardMaterial color={selected?'#c9b4ef':index%2?'#eadce8':'#e4e0f3'}/></mesh>
+          <Box at={[-1.65,.45,.3]} size={[.06,.9,2.6]} color="#d4c4de"/>
+          <Desk index={index} color={color}/>
+          {!resting?<AgentModel color={color} index={index} reduced={props.reduced} working={working}/>:null}
+          <Label text={`${name} · ${state}`} position={[0,2.7,0]} selected={selected}/>
+        </group>
+        <group position={[loungeX,0,loungeZ]}>
+          <Box at={[0,.3,-.07]} size={[1.4,.45,.75]} color={color}/><Box at={[0,.7,-.4]} size={[1.4,.7,.13]} color={color}/>
+          {resting?<><AgentModel color={color} index={index} reduced={props.reduced}/><Label text={name} position={[0,2.4,0]} selected={selected}/></>:null}
+        </group>
+      </group>;
+    })}
+    <Plant at={[-6.1,0,-depth/2+.8]}/><Plant at={[6.1,0,-depth/2+.8]}/><Plant at={[6.1,0,loungeZ]}/>
     <Controls reset={props.reset}/>
   </>;
 }
@@ -98,5 +126,6 @@ class OfficeBoundary extends Component<{children:ReactNode;language:'id'|'en'},{
   render(){return this.state.failed?<div className="office-fallback">{this.props.language==='id'?'Kantor 3D belum tersedia di perangkat ini. Pilih agent melalui tombol di bawah.':'3D is unavailable on this device. Select an agent with the buttons below.'}</div>:this.props.children;}
 }
 export default function TeamOffice(props:Props) {
-  return <OfficeBoundary language={props.language}><Canvas camera={{position:[12,13,16],fov:43}} dpr={[1,1.5]} frameloop={props.reduced?'demand':'always'} gl={{antialias:false,alpha:false}} aria-label={props.language==='id'?`Kantor 3D tim Renso dengan ${TEAM_WORKSPACE.teams.length} karakter agent`:`Renso 3D office with ${TEAM_WORKSPACE.teams.length} agent characters`}><OfficeScene {...props}/></Canvas></OfficeBoundary>;
+  const count=TEAM_WORKSPACE.teams.filter(team=>!props.division||team.divisionId===props.division).length;
+  return <OfficeBoundary language={props.language}><Canvas camera={{position:[12,13,16],fov:43}} dpr={[1,1.5]} frameloop={props.reduced?'demand':'always'} gl={{antialias:false,alpha:false}} aria-label={props.language==='id'?`Kantor 3D tim Renso dengan ${count} karakter agent`:`Renso 3D office with ${count} agent characters`}><OfficeScene {...props}/></Canvas></OfficeBoundary>;
 }

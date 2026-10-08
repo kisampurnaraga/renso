@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { deriveWorkerActivity, type WorkerActivity } from '../shared/worker-activity.mjs';
 import { TEAM_WORKSPACE } from './team-workspace-data';
 
-type Props = { teamId: string; language: 'id' | 'en'; suggestedInstructions: string };
+type Props = { teamId: string; language: 'id' | 'en'; suggestedInstructions: string; onActivity?: (activity: WorkerActivity) => void };
 type Job = { id: string; team: string; title: string; instructions: string; status: string; createdAt?: string; updatedAt?: string; runUrl?: string | null; prUrl?: string | null; created_at?: string; updated_at?: string; run_url?: string | null; pr_url?: string | null; error?: string | null };
 type OwnerStatus = { configured: boolean; authenticated: boolean; workerConfigured: boolean; databaseConfigured: boolean };
 const statusNames: Record<string, [string, string]> = {
@@ -14,7 +15,7 @@ function evidenceUrl(value?: string | null) {
   try { const url = new URL(value); return url.protocol === 'https:' && url.hostname === 'github.com' ? url.href : undefined; } catch { return undefined; }
 }
 
-export default function TeamJobQueue({ teamId, language, suggestedInstructions }: Props) {
+export default function TeamJobQueue({ teamId, language, suggestedInstructions, onActivity }: Props) {
   const english = language === 'en';
   const [owner, setOwner] = useState<OwnerStatus | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -26,6 +27,12 @@ export default function TeamJobQueue({ teamId, language, suggestedInstructions }
   const lock = useRef(false);
   const alive = useRef(true);
   const request = useRef<AbortController | null>(null);
+  const [verifiedAt, setVerifiedAt] = useState(0);
+  const freshness = useRef(verifiedAt); freshness.current = verifiedAt;
+  const latestJobs = useRef(jobs); latestJobs.current = jobs;
+  const latestOwner = useRef(owner); latestOwner.current = owner;
+  const activityCallback = useRef(onActivity); activityCallback.current = onActivity;
+  const clearActivity = () => { setVerifiedAt(0); };
   const team = TEAM_WORKSPACE.teams.find(item => item.id === teamId)!;
   const draft = drafts[teamId] || { title: '', instructions: '' };
   function edit(field: 'title' | 'instructions', value: string) {
@@ -51,14 +58,14 @@ export default function TeamJobQueue({ teamId, language, suggestedInstructions }
     if (status.authenticated) {
       const result = await call('jobs');
       if (!Array.isArray(result.jobs)) throw new Error(english ? 'Invalid job list.' : 'Daftar tugas belum sesuai.');
-      if (alive.current) setJobs(result.jobs);
-    } else if (alive.current) setJobs([]);
+      if (alive.current) { setJobs(result.jobs); setVerifiedAt(Date.now()); }
+    } else if (alive.current) { setJobs([]); clearActivity(); }
   }
   async function operate(label: string, action: () => Promise<void>) {
     if (lock.current) return;
     lock.current = true; setBusy(label); setError(''); setNotice('');
     try { await action(); } catch (cause) {
-      if (alive.current) setError(cause instanceof Error && cause.name !== 'AbortError' ? cause.message : english ? 'Request timed out. Check the task list before retrying.' : 'Permintaan terlalu lama. Periksa daftar tugas sebelum mencoba kembali.');
+      if (alive.current) { clearActivity(); setError(cause instanceof Error && cause.name !== 'AbortError' ? cause.message : english ? 'Request timed out. Check the task list before retrying.' : 'Permintaan terlalu lama. Periksa daftar tugas sebelum mencoba kembali.'); }
     } finally { lock.current = false; if (alive.current) setBusy(''); }
   }
   useEffect(() => {
@@ -66,10 +73,30 @@ export default function TeamJobQueue({ teamId, language, suggestedInstructions }
     queueMicrotask(() => { if (active) void operate('load', refresh); });
     return () => { active = false; alive.current = false; request.current?.abort(); };
   }, []);
+  useEffect(() => {
+    const unknown = () => Object.fromEntries(TEAM_WORKSPACE.teams.map(item => [item.id, 'unknown'])) as WorkerActivity;
+    activityCallback.current?.(owner?.authenticated && verifiedAt ? deriveWorkerActivity(jobs, TEAM_WORKSPACE.teams.map(item => item.id)) : unknown());
+  }, [jobs, owner?.authenticated, verifiedAt]);
+  useEffect(() => {
+    let active = true;
+    async function poll() {
+      if (!active || document.hidden || lock.current || !latestOwner.current?.authenticated) return;
+      await operate('poll', async () => {
+        const activeJobs = latestJobs.current.filter(job => ['dispatching', 'dispatched', 'running'].includes(job.status)).slice(0, 3);
+        for (const job of activeJobs) { if (!active) return; await call('job-sync', { id: job.id }); }
+        if (active) await refresh();
+      });
+    }
+    function visibility() { clearActivity(); if (!document.hidden) void poll(); }
+    const timer = window.setInterval(() => void poll(), 30000);
+    const staleTimer = window.setInterval(() => { if (freshness.current && Date.now() - freshness.current > 45000) clearActivity(); }, 5000);
+    document.addEventListener('visibilitychange', visibility);
+    return () => { active = false; window.clearInterval(timer); window.clearInterval(staleTimer); document.removeEventListener('visibilitychange', visibility); activityCallback.current?.(Object.fromEntries(TEAM_WORKSPACE.teams.map(item => [item.id, 'unknown'])) as WorkerActivity); };
+  }, []);
   const disabled = Boolean(busy);
   return <section className="team-job-queue" aria-labelledby="team-jobs-title">
     <div className="team-jobs-heading"><div><p className="team-eyebrow">{english ? 'OWNER WORKSPACE' : 'RUANG KERJA PEMILIK'}</p><h2 id="team-jobs-title">{english ? 'Assign real work' : 'Tugaskan pekerjaan nyata'}</h2><p>{english ? 'Save a task, send it to the worker, then review its evidence and draft pull request.' : 'Simpan tugas, kirim ke worker, lalu tinjau bukti dan draft pull request hasilnya.'}</p></div><button disabled={disabled} onClick={() => void operate('refresh', refresh)}>{english ? 'Refresh tasks' : 'Perbarui tugas'}</button></div>
-    {busy ? <p role="status">{english ? 'Connecting…' : 'Menghubungkan…'}</p> : null}
+    {busy && busy !== 'poll' ? <p role="status">{english ? 'Connecting…' : 'Menghubungkan…'}</p> : null}
     {error ? <p className="agent-chat-error" role="alert">{error}</p> : null}
     {notice ? <p role="status" className="agent-brief-notice">{notice}</p> : null}
     {owner && !owner.configured ? <p className="team-jobs-setup">{english ? 'Owner access is not configured yet. The server needs OWNER_ACCESS_KEY and the task database migration before assignments can be stored.' : 'Akses pemilik belum dikonfigurasi. Server membutuhkan OWNER_ACCESS_KEY dan migrasi database tugas sebelum penugasan bisa disimpan.'}</p> : null}
@@ -81,6 +108,7 @@ export default function TeamJobQueue({ teamId, language, suggestedInstructions }
       <form className="team-job-form" onSubmit={event => { event.preventDefault(); const submittedTeam = teamId; void operate('create', async () => { await call('jobs', { team: submittedTeam, title: draft.title.trim(), instructions: draft.instructions.trim() }); setDrafts(previous => ({ ...previous, [submittedTeam]: { title: '', instructions: '' } })); await refresh(); setNotice(english ? 'Task saved in the database. Send it to the worker when ready.' : 'Tugas tersimpan di database. Kirim ke worker jika sudah siap.'); }); }}>
         <p><strong>{english ? 'Assigned team: ' : 'Tim yang ditugaskan: '}{team.name[language]}</strong></p>
         {teamId==='architect'||teamId==='research'?<small>{english?'Before the first assignment for this role, apply the Neon migration: ':'Sebelum penugasan pertama untuk peran ini, jalankan migrasi Neon: '}<a href="https://github.com/kisampurnaraga/renso/blob/main/db/003_team_leadership.sql" target="_blank" rel="noopener noreferrer">003_team_leadership.sql</a></small>:null}
+        {['science','psychology','content'].includes(teamId)?<small>{english?'Apply the role migration before saving: ':'Jalankan migrasi peran sebelum menyimpan: '}<a href="https://github.com/kisampurnaraga/renso/blob/main/db/004_science_content_roles.sql" target="_blank" rel="noopener noreferrer">004_science_content_roles.sql</a></small>:null}
         <label htmlFor="job-title">{english ? 'Task title' : 'Judul tugas'}</label><input id="job-title" value={draft.title} maxLength={120} required disabled={disabled} onChange={event => edit('title', event.target.value)} placeholder={english ? 'A specific Renso improvement' : 'Perbaikan Renso yang spesifik'}/>
         <label htmlFor="job-instructions">{english ? 'Instructions and success criteria' : 'Arahan dan kriteria berhasil'}</label><textarea id="job-instructions" rows={5} value={draft.instructions} maxLength={4000} required disabled={disabled} onChange={event => edit('instructions', event.target.value)} placeholder={english ? 'Describe the change, expected behavior, and how to verify it.' : 'Jelaskan perubahan, perilaku yang diharapkan, dan cara memeriksanya.'}/>
         <div className="team-job-actions"><button type="button" disabled={disabled || !suggestedInstructions.trim()} onClick={() => edit('instructions', suggestedInstructions.slice(0,4000))}>{english ? 'Use brief and latest request' : 'Gunakan briefing dan permintaan terakhir'}</button><button type="submit" disabled={disabled || !owner.databaseConfigured || !draft.title.trim() || !draft.instructions.trim()}>{english ? 'Save task' : 'Simpan tugas'}</button></div>

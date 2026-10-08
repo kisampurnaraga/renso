@@ -101,5 +101,23 @@ test('architect sees cross-team evidence while research remains scoped and all n
   assert.ok(research.includes('product-research-plan'));
   assert.ok(!research.includes('music-presets'));
   const { chat } = await fixture(t, async () => success(), {DAILY_CHAT_LIMIT:'10'});
-  for(const team of ['architect','research','marketing']) assert.equal((await chat({...body,team})).statusCode,200);
+  for(const team of ['architect','research','marketing','science','psychology','content']) assert.equal((await chat({...body,team})).statusCode,200);
+});
+
+
+test('named agents have valid divisions and distinct evidence-safe targets', async () => {
+  const {TEAM_WORKSPACE, TEAM_DIVISIONS} = await import('../shared/team-workspace.mjs');
+  const {TEAM_TARGETS} = await import('../shared/team-roles.mjs');
+  const {teamChatMessages} = await import('./team-chat.mjs');
+  const divisions = new Set(TEAM_DIVISIONS.map(item => item.id));
+  assert.equal(TEAM_WORKSPACE.teams.length, 13);
+  assert.equal(new Set(TEAM_WORKSPACE.teams.map(item => item.agentName)).size, 13);
+  for (const role of TEAM_WORKSPACE.teams) {
+    assert.ok(divisions.has(role.divisionId));
+    assert.ok(TEAM_TARGETS[role.id].id && TEAM_TARGETS[role.id].en);
+    assert.ok(teamChatMessages({team:role.id,language:'id',message:'Target saya'})[0].content.includes(role.agentName));
+  }
+  assert.ok(TEAM_TARGETS.science.en.includes('not physics/MRI'));
+  assert.ok(TEAM_TARGETS.psychology.en.includes('human psychologist'));
+  assert.ok(TEAM_TARGETS.content.en.includes('Never claim account creation'));
 });

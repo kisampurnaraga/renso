@@ -17,6 +17,9 @@ export function orderContextFiles(names, team, instructions) {
     community: /community|team-workspace/i,
     architect: /release|architecture|agent_team|validation|team-workspace|team-roles/i,
     research: /research|go_to_market|release_playbook|agent_team/i,
+    science: /expression|aura|scanner|science|research/i,
+    psychology: /agents|experience|psychology|wellbeing|safety/i,
+    content: /content|motion|marketing|go_to_market|brand/i,
   }[team] || /^src\//;
   const words = instructions.toLowerCase().split(/[^a-z0-9_-]+/).filter(word=>word.length>3);
   const score = name => (instructions.includes(name)?1000:0) + (focus.test(name)?100:0) + (name.startsWith('src/')?20:0) + (name.startsWith('shared/')?10:0) + Math.min(20,words.filter(word=>name.toLowerCase().includes(word)).length*5);
