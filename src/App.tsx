@@ -99,7 +99,7 @@ export default function App() {
     setMessages(m=>[...m,{role:'user',content:text.trim()},{role:'assistant',content:workReply(selected,workMode)}]);
   }
   function endWork(){setWorkEnabled(false);setWorkActivity(null);setWorkLabel('');stopAudio();}
-  function musicMood(next:Mood){setMood(next);if(next==='red')beginWork('cheerful');}
+  function musicMood(next:Mood){setMood(next);}
   function chooseAgent(next:Agent){endWork();stopAudio();setAgent(next);setMessages([{role:'assistant',content:AGENTS[next].greeting}]);setInput('');setNotice('Percakapan baru dimulai. Cerita sebelumnya tidak diteruskan ke agent ini.');}
   async function send(text=input) {
     if(!text.trim()||!ready||requestLock.current||recording)return;
