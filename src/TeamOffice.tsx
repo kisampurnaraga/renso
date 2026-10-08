@@ -4,7 +4,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as THREE from 'three';
 import { TEAM_WORKSPACE } from './team-workspace-data';
 
-type Props = {language:'id'|'en';selected:string;onSelect:(id:string)=>void;reduced:boolean;reset:number;division?:string;jobStatuses?:Record<string,string>};
+type AgentPresence='resting'|'available';
+type Props = {language:'id'|'en';selected:string;onSelect:(id:string)=>void;reduced:boolean;reset:number;division?:string;jobStatuses?:Record<string,string>;agentPresence?:Record<string,AgentPresence>};
 const outfits = ['#62a9ad','#797de1','#dc92b1','#eab25b','#6eb7b8','#83b889','#889bcf','#dd946c','#e397ba','#a18bca'];
 
 function Box({at,size,color}:{at:[number,number,number];size:[number,number,number];color:string}) {
@@ -94,13 +95,14 @@ function OfficeScene(props:Props) {
       const z=-depth/2+1.3+Math.floor(index/columns)*3.1;
       const selected=props.selected===team.id;
       const status=props.jobStatuses?.[team.id] || 'unknown';
+      const presence=props.agentPresence?.[team.id] || 'resting';
       const working=status==='running';
-      const waiting=status==='queued'||status==='dispatched';
-      const resting=['idle','completed','review_ready','done','failed','cancelled'].includes(status);
+      const waiting=['queued','dispatching','dispatched'].includes(status);
+      const resting=presence==='resting'&&!working&&!waiting;
       const color=outfits[index%outfits.length];
       const metadata=team as typeof team & {agentName?:string};
       const name=metadata.agentName || team.name[props.language];
-      const state=props.language==='id'?(working?'Bekerja':waiting?'Menunggu worker':resting?'Istirahat':'Status belum tersedia'):(working?'Working':waiting?'Waiting for worker':resting?'Resting':'Status unavailable');
+      const state=props.language==='id'?(working?'Bekerja':waiting?'Menunggu worker':resting?'Istirahat':'Siap bekerja'):(working?'Working':waiting?'Waiting for worker':resting?'Resting':'Ready for work');
       const loungeX=(index-(teams.length-1)/2)*Math.min(1.65,10/Math.max(1,teams.length));
       return <group key={team.id} onClick={event=>{event.stopPropagation();props.onSelect(team.id);}}>
         <group position={[x,0,z]}>
