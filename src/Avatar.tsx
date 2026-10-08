@@ -1,21 +1,21 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import * as THREE from 'three';
-type Props = { color: string; agent: string; speaking: boolean; reduced: boolean };
+type Props = { color: string; agent: string; speaking: boolean; musicPlaying?: boolean; reduced: boolean };
 function Block({ position, size, color }: { position: [number,number,number]; size: [number,number,number]; color: string }) {
   return <mesh position={position}><boxGeometry args={size}/><meshStandardMaterial color={color} roughness={0.65}/></mesh>;
 }
-function Character({ color, agent, speaking, reduced }: Props) {
+function Character({ color, agent, speaking, musicPlaying, reduced }: Props) {
   const body = useRef<THREE.Group>(null);
   const aura = useRef<THREE.Mesh>(null);
   const mouth = useRef<THREE.Mesh>(null);
   const arm = useRef<THREE.Group>(null);
   useFrame(({clock}) => {
     const t = clock.elapsedTime;
-    if(body.current) { body.current.position.y = reduced ? 0 : Math.sin(t*1.8)*0.065; body.current.rotation.y = reduced ? -0.15 : -0.15+Math.sin(t*0.5)*0.09; }
+    if(body.current) { body.current.position.y = reduced ? 0 : Math.sin(t*(musicPlaying?3.2:1.8))*(musicPlaying?0.1:0.065); body.current.rotation.y = reduced ? -0.15 : -0.15+Math.sin(t*0.5)*0.09; }
     if(aura.current) aura.current.scale.setScalar(reduced ? 1 : 1+Math.sin(t*(speaking?8:2))*0.035);
     if(mouth.current) mouth.current.scale.y = speaking && !reduced ? 1.5+Math.sin(t*18)*0.9 : 1;
-    if(arm.current) arm.current.rotation.z = reduced ? -0.12 : -0.12+Math.sin(t*2)*0.07;
+    if(arm.current) arm.current.rotation.z = reduced ? -0.12 : -0.12+Math.sin(t*(musicPlaying?3.2:2))*(musicPlaying?0.22:0.07);
   });
   const outfit = agent === 'teduh' ? '#7c86dc' : '#ed9c60';
   return <>

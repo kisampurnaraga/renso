@@ -25,7 +25,7 @@ export async function buildApp(options = {}) {
   const cleanupTimer = setInterval(() => store.cleanup().catch(() => {}), 3600_000); cleanupTimer.unref();
   app.addHook('onClose', async () => { clearInterval(cleanupTimer); await store.close(); });
   app.addHook('onSend', async (request, reply) => {
-    reply.header('X-Content-Type-Options','nosniff').header('Referrer-Policy','same-origin').header('Permissions-Policy','camera=(), microphone=(self)');
+    reply.header('X-Content-Type-Options','nosniff').header('Referrer-Policy','same-origin').header('Permissions-Policy','camera=(self), microphone=(self)');
     if(request.url.startsWith('/api')) reply.header('Cache-Control','no-store');
   });
   app.addHook('preHandler', async (request, reply) => {

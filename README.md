@@ -85,3 +85,11 @@ db/              Migrasi PostgreSQL
 public/          Manifest, favicon, offline page dan service worker
 docs/            Arsitektur dan roadmap
 ```
+
+## Mood Room dan Aura Scan
+
+Mood Room memainkan instrumental yang disintesis di browser dengan Web Audio. Pengguna harus menekan putar; tersedia pilihan suasana, volume, dan mode musik saja. Audio berhenti saat halaman disembunyikan. Gerakan avatar saat musik diputar adalah animasi ritmis, bukan analisis beat dari mikrofon.
+
+Aura Scan meminta izin kamera secara eksplisit. MediaPipe Face Landmarker mendeteksi titik wajah secara lokal, lalu pengguna memilih sendiri suasananya. Kamera bukan MRI dan fitur ini tidak menebak emosi, kepribadian, atau kondisi medis. Foto/video tidak diunggah maupun disimpan. Engine WASM diunduh dari jsDelivr dan model dari Google; jaringan pertama dan dukungan browser memengaruhi ketersediaan. Jika kamera atau model gagal, pemilihan suasana manual tetap tersedia. Kamera dihentikan ketika scanner ditutup atau halaman disembunyikan.
+
+Panduan pilot dan pembagian kerja agent tersedia di `docs/GO_TO_MARKET.md` dan `docs/AGENT_TEAM.md`. Agent tim bekerja saat tugas dijalankan, belum menjadi layanan otomatis yang aktif sepanjang waktu.

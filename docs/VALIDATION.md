@@ -11,3 +11,13 @@
 Belum diuji: Neon/PostgreSQL nyata, panggilan AI langsung, transkripsi provider langsung, suara pada HP nyata, pemasangan PWA pada Android, pembayaran, dan APK. Tidak ada kredensial provider aktif selama validasi. Headless mobile viewport bukan pengujian perangkat Android fisik.
 
 Source disiapkan untuk repository `kisampurnaraga/renso`, yang dibuat pemilik pada 8 Oktober 2026. Kredensial database dan AI tidak termasuk dalam source.
+
+## Mood Room + Aura Scan (2026-10-08)
+
+- Production build in `VITE_RENSO_MODE=demo`: PASS; scanner/music lazy-loaded separately.
+- Existing backend/demo suite: 12 PASS; same-origin camera policy included.
+- Local Chromium 390x844 and 1365x1000: music play/pause, volume, music-only voice disabling, preset-to-aura selection, timer control, responsive no horizontal overflow: PASS.
+- Scanner explicit opt-in, denied camera permission, manual mood selection, late stream after dialog dismissal, and model download failure: PASS; tracks stopped in dismissal/failure tests.
+- Audio lifecycle mock: stale resume rejection preserves newer playback, pending volume retained, canceled start does not activate audio: PASS.
+- Production dependency audit: zero reported vulnerabilities.
+- Real phone speaker quality, successful landmarks from a real face, and real device camera permission behavior remain unverified. No emotion classification or MRI claims. Preview conversation remains scripted demo; database/live AI unchanged.
