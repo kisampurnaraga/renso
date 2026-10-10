@@ -29,3 +29,22 @@ The queue is persisted in Neon; owner credentials are not. Guest chat and existi
 
 - [GitHub workflow dispatch API](https://docs.github.com/en/rest/actions/workflows#create-a-workflow-dispatch-event)
 - [Groq chat completions API](https://console.groq.com/docs/api-reference)
+
+
+## Provider limits and recovery
+
+Generation makes at most three Groq requests for a task. HTTP 429 and temporary
+HTTP 500/502/503/504 responses use bounded retries; connection failures and
+request timeouts also retry. The same task payload is reused. Without a valid
+`Retry-After` header, waits are 15 seconds then 30 seconds. A valid header takes
+precedence, with a minimum wait of one second. If the provider requests more than
+60 seconds, the worker stops rather than retrying before the quota resets.
+Authentication errors and other nontransient HTTP responses fail immediately.
+
+Retries appear in the generation log without provider response bodies, task
+contents or credentials. If all attempts fail, verification and publication are
+skipped. A failed run does not mean a draft PR was created. Check the Actions run
+before retrying a failed task; wait for quota recovery and avoid dispatching many
+jobs together. Retries improve temporary failures but cannot increase the
+provider's daily quota. Publication is not automatically retried because GitHub
+write operations may already have succeeded.

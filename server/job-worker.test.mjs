@@ -70,3 +70,55 @@ test('apply records newly created files in review diff and refuses an unchanged 
     assert.throws(() => execFileSync(process.execPath, [script, 'apply'], { cwd: root, stdio: 'pipe' }), /Worker proposed no changes/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
+
+
+test('generation recovers from rate limits and temporary provider failures', async () => {
+  const { requestGeneration } = await import('../scripts/renso-worker.mjs');
+  const delays = [], reports = [], requests = [];
+  const responses = [new Response('private provider text', { status: 429, headers: { 'Retry-After': '2' } }), new Response('', { status: 503 }), Response.json({ choices: [{ message: { content: 'result' } }] })];
+  const result = await requestGeneration({ model: 'test' }, 'test-key', {
+    fetch: async (url, options) => { requests.push({ url, options }); return responses.shift(); },
+    wait: async delay => delays.push(delay), report: message => reports.push(message),
+  });
+  assert.equal(result.choices[0].message.content, 'result');
+  assert.deepEqual(delays, [2000, 30000]);
+  assert.equal(requests.length, 3);
+  assert.ok(requests.every(item => item.options.body === requests[0].options.body));
+  assert.ok(!reports.join(' ').includes('private provider text'));
+  assert.ok(!reports.join(' ').includes('test-key'));
+});
+
+test('generation caps retries and never retries authentication errors or a long quota reset', async () => {
+  const { requestGeneration } = await import('../scripts/renso-worker.mjs');
+  for (const [status, retryAfter, expectedCalls] of [[429, null, 3], [401, null, 1], [429, '3600', 1]]) {
+    let calls = 0;
+    await assert.rejects(requestGeneration({}, 'test-key', {
+      fetch: async () => { calls++; return new Response('private', { status, headers: retryAfter ? { 'Retry-After': retryAfter } : {} }); },
+      wait: async () => {}, report: () => {},
+    }), status === 429 ? /quota recovery/ : /HTTP 401/);
+    assert.equal(calls, expectedCalls);
+  }
+});
+
+test('retry delay honors HTTP dates and rejects invalid headers with backoff', async () => {
+  const { retryDelay } = await import('../scripts/renso-worker.mjs');
+  const now = Date.parse('2026-10-10T00:00:00Z');
+  const response = value => new Response('', { status: 429, headers: { 'Retry-After': value } });
+  assert.equal(retryDelay(response('Sat, 10 Oct 2026 00:00:20 GMT'), 0, now), 20000);
+  assert.equal(retryDelay(response('invalid'), 1, now), 30000);
+  assert.equal(retryDelay(response('0'), 0, now), 1000);
+});
+
+test('generation retries transient connection failures without leaking their message', async () => {
+  const { requestGeneration } = await import('../scripts/renso-worker.mjs');
+  let calls = 0;
+  const delays = [];
+  await requestGeneration({}, 'test-key', {
+    fetch: async () => { if (++calls < 3) throw new TypeError('private connection detail'); return Response.json({ ok: true }); },
+    wait: async delay => delays.push(delay), report: () => {},
+  });
+  assert.deepEqual(delays, [15000, 30000]);
+  await assert.rejects(requestGeneration({}, 'test-key', {
+    fetch: async () => { throw new TypeError('private connection detail'); }, wait: async () => {}, report: () => {},
+  }), error => /connection failed/.test(error.message) && !error.message.includes('private'));
+});
