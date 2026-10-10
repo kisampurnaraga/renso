@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { MoodMusic, type MusicPreset } from './music-engine';
 import './mood-room.css';
+import MusicLibrary, {type LibraryTrack} from './MusicLibrary';
 
 type Props = {
   recommendation?: {mood:'blue'|'green'|'red';sequence:number}|null;
@@ -15,6 +16,9 @@ const rooms: { id: MusicPreset; mood: 'blue' | 'green' | 'red'; icon: string; ti
 ];
 
 export default function MoodRoom({ recommendation, onMoodChange, onPlaybackChange, onMusicOnlyChange }: Props) {
+  const [source,setSource]=useState<'original'|'audius'>('original');
+  const [track,setTrack]=useState<LibraryTrack|null>(null);
+  const external=useRef<HTMLAudioElement|null>(null);
   const [preset, setPreset] = useState<MusicPreset>('ambient');
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -37,6 +41,7 @@ export default function MoodRoom({ recommendation, onMoodChange, onPlaybackChang
     playback.current = false;
     pending.current = false;
     engine.current?.stop();
+    if(external.current){external.current.pause();external.current.removeAttribute('src');external.current.load();external.current=null;}
     setPlaying(false);
     setBusy(false);
     callbacks.current.onPlaybackChange(false);
@@ -47,6 +52,7 @@ export default function MoodRoom({ recommendation, onMoodChange, onPlaybackChang
     if (!recommendation) return;
     const room = rooms.find(item => item.mood === recommendation.mood)!;
     stop(`${room.title} disiapkan dari pilihanmu di Aura Scan. Ketuk Putar musik untuk mulai.`);
+    setSource('original');
     setPreset(room.id);
     setRemaining(300);
   }, [recommendation]);
@@ -61,6 +67,7 @@ export default function MoodRoom({ recommendation, onMoodChange, onPlaybackChang
       pending.current = false;
       playback.current = false;
       engine.current?.stop();
+    if(external.current){external.current.pause();external.current.removeAttribute('src');external.current.load();external.current=null;}
       callbacks.current.onPlaybackChange(false);
       callbacks.current.onMusicOnlyChange(false);
       document.removeEventListener('visibilitychange', hidden);
@@ -78,45 +85,55 @@ export default function MoodRoom({ recommendation, onMoodChange, onPlaybackChang
 
   async function play() {
     if (playback.current) { stop('Musik dijeda. Lanjutkan kapan kamu mau.'); return; }
-    if (pending.current) return;
+    if (pending.current) {stop('Pemutaran dibatalkan.');return;}
     const run = ++generation.current;
     const active = () => mounted.current && generation.current === run;
     pending.current = true;
     setBusy(true);
     setNotice('Menyiapkan musik…');
     try {
-      engine.current ??= new MoodMusic();
-      const started = await engine.current.start(preset, volume / 100);
+      let started=true;
+      if(source==='audius'){
+        if(!track)throw new Error('Pilih lagu dari katalog terlebih dahulu.');
+        const audio=new Audio(track.streamUrl);external.current=audio;audio.volume=volume/100;
+        audio.onended=()=>{if(active())stop('Lagu selesai. Pilih lagu lain atau putar lagi.');};
+        audio.onerror=()=>{if(active())stop('Lagu belum bisa diputar. Coba lagu lain atau musik original.');};
+        await audio.play();
+        if(!active()){audio.pause();return;}
+      }else{engine.current ??= new MoodMusic();started=await engine.current.start(preset,volume/100);}
       if (!active() || !started) return;
       if (remaining === 0) setRemaining(300);
       playback.current = true;
       setPlaying(true);
       callbacks.current.onPlaybackChange(true);
-      setNotice(`${selected.title} sedang menemanimu.`);
+      setNotice(`${source==='audius'?track?.title:selected.title} sedang menemanimu.`);
     } catch (error) {
-      if (active()) setNotice(error instanceof Error ? error.message : 'Musik belum bisa diputar. Coba lagi.');
+      if (active()) stop(error instanceof Error ? `${error.message} Pilih musik original jika diperlukan.` : 'Musik belum bisa diputar. Coba lagi.');
     } finally { if (active()) { pending.current = false; setBusy(false); } }
   }
 
   return <section className={`mood-room mood-room--${preset}`} aria-labelledby="mood-room-title">
-    <div className="mood-room-heading"><div><p className="mood-room-eyebrow">MUSIK, TEMAN, DAN RUANG KECILMU</p><h2 id="mood-room-title">Masuk ke Mood Room <span aria-hidden="true">✦</span></h2></div><span className="mood-room-pill">Instrumental original</span></div>
+    <div className="mood-room-heading"><div><p className="mood-room-eyebrow">MUSIK, TEMAN, DAN RUANG KECILMU</p><h2 id="mood-room-title">Masuk ke Mood Room <span aria-hidden="true">✦</span></h2></div><span className="mood-room-pill">{source==='audius'?'Katalog Audius':'Instrumental original'}</span></div>
     <p className="mood-room-intro">Mau ditemani suasananya, mengambil jeda, atau menikmati nada ceria? Kamu yang memilih.</p>
+    <div className="music-source" role="group" aria-label="Sumber musik"><button aria-pressed={source==='original'} onClick={()=>{stop();setSource('original');}}>Musik original</button><button aria-pressed={source==='audius'} onClick={()=>{stop();setSource('audius');}}>Library lagu · Audius</button></div>
+    {source==='audius'?<MusicLibrary selected={track?.id||null} onSelect={next=>{stop('Lagu dipilih. Ketuk Putar musik untuk mulai.');setTrack(next);setRemaining(300);}}/>:null}
     <div className="mood-room-presets" role="group" aria-label="Pilih suasana musik">
       {rooms.map(room => <button type="button" key={room.id} className={`mood-room-preset ${preset === room.id ? 'is-selected' : ''}`} aria-pressed={preset === room.id} onClick={() => {
         stop('Suasana dipilih. Ketuk Putar musik untuk mulai.');
-        setPreset(room.id); setRemaining(300); onMoodChange(room.mood);
+        setSource('original'); setPreset(room.id); setRemaining(300); onMoodChange(room.mood);
       }}><span className="mood-room-icon" aria-hidden="true">{room.icon}</span><strong>{room.title}</strong><span>{room.detail}</span></button>)}
     </div>
     <div className="mood-room-player">
       <div className={`mood-room-wave ${playing ? 'is-playing' : ''}`} aria-hidden="true">{Array.from({ length: 16 }, (_, index) => <i key={index} style={{ animationDelay: `${index * 0.08}s`, height: `${12 + ((index * 13) % 30)}px` }} />)}</div>
-      <div className="mood-room-player-copy"><strong>{selected.title}</strong><span>{playing ? 'Sedang diputar' : 'Siap menemanimu'}{timer ? ` · ${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}` : ''}</span></div>
-      <button type="button" className="mood-room-play" onClick={() => void play()} disabled={busy}><span aria-hidden="true">{playing ? 'Ⅱ' : '▶'}</span> {busy ? 'Menyiapkan…' : playing ? 'Jeda musik' : 'Putar musik'}</button>
+      <div className="mood-room-player-copy"><strong>{source==='audius'?(track?.title||'Pilih lagu dari katalog'):selected.title}</strong><span>{playing ? 'Sedang diputar' : 'Siap menemanimu'}{timer ? ` · ${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}` : ''}</span></div>
+      <button type="button" className="mood-room-play" onClick={() => void play()} disabled={source==='audius'&&!track}><span aria-hidden="true">{playing ? 'Ⅱ' : '▶'}</span> {busy ? 'Batalkan' : playing ? 'Jeda musik' : 'Putar musik'}</button>
     </div>
     <div className="mood-room-options">
-      <label className="mood-room-volume">Volume <input type="range" min="0" max="100" value={volume} onChange={event => { const value = Number(event.target.value); setVolume(value); engine.current?.setVolume(value / 100); }} aria-label="Volume musik" /><span>{volume}%</span></label>
+      <label className="mood-room-volume">Volume <input type="range" min="0" max="100" value={volume} onChange={event => { const value = Number(event.target.value); setVolume(value); engine.current?.setVolume(value / 100); if(external.current)external.current.volume=value/100; }} aria-label="Volume musik" /><span>{volume}%</span></label>
       <label><input type="checkbox" checked={only} onChange={event => { setOnly(event.target.checked); onMusicOnlyChange(event.target.checked); }} /> Musik saja</label>
       <label><input type="checkbox" checked={timer} onChange={event => { setTimer(event.target.checked); setRemaining(300); }} /> Sesi 5 menit</label>
     </div>
+    {source==='audius'&&track?<p className="mood-room-footnote">{track.artist} · {track.license} · <a href={track.sourceUrl} target="_blank" rel="noreferrer">Sumber lagu di Audius ↗</a></p>:null}
     <p className="mood-room-status" role="status">{notice}</p>
     <p className="mood-room-footnote">Tanpa autoplay. Musik berhenti saat halaman ditinggalkan. Suasana dipilih olehmu, bukan diagnosis perasaan.</p>
   </section>;

@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import { registerMusicRoutes } from './music-provider.mjs';
 import cookie from '@fastify/cookie';
 import rateLimit from '@fastify/rate-limit';
 import { randomBytes, createHash } from 'node:crypto';
@@ -91,6 +92,7 @@ export async function buildApp(options = {}) {
       return {text:await provider.transcribe(request.body,type)};
     } catch(error) {await store.refund(id); return reply.code(error instanceof ProviderError && error.status === 429 ? 429 : 503).send({error:error instanceof ProviderError && error.status === 429 ? 'Layanan suara sedang mencapai batas penggunaan. Coba ketik pesanmu.' : 'Rekaman belum bisa diproses. Coba ketik pesanmu.'});}
   });
+  await registerMusicRoutes(app, env, options.musicFetch);
   await registerJobRoutes(app,env,options.jobs);
   app.setErrorHandler((error,_request,reply)=>{ reply.code(error.statusCode && error.statusCode < 500 ? error.statusCode : 500).send({error:error.validation?'Periksa isi pesanmu.':error.statusCode===429?'Terlalu banyak permintaan. Tunggu sebentar.':'Permintaan belum bisa diproses.'}); });
   return app;
