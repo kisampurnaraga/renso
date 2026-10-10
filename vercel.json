@@ -5,15 +5,45 @@
   "installCommand": "npm ci",
   "outputDirectory": "dist",
   "functions": {
-    "api/[...path].js": { "maxDuration": 60 },
-    "api/team/chat.js": { "maxDuration": 60 }
+    "api/[...path].js": {
+      "maxDuration": 60
+    },
+    "api/team/chat.js": {
+      "maxDuration": 60
+    },
+    "api/music/search.js": {
+      "maxDuration": 60
+    },
+    "api/music/stream/[id].js": {
+      "maxDuration": 60
+    }
   },
   "headers": [
-    { "source": "/(.*)", "headers": [
-      { "key": "X-Content-Type-Options", "value": "nosniff" },
-      { "key": "Referrer-Policy", "value": "same-origin" },
-      { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self)" }
-    ] },
-    { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self)"
+        }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
   ]
 }
