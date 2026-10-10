@@ -1,3 +1,4 @@
+import { officePresence } from '../shared/office-presence.mjs';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { TEAM_WORKSPACE, type Localized, type WorkspaceTask } from './team-workspace-data';
 import './team-workspace.css';
@@ -69,17 +70,20 @@ export default function TeamWorkspace() {
     `${local(task.title)} ${local(task.detail)} ${local(TEAM_WORKSPACE.teams.find(item=>item.id===task.teamId)!.name)}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())
   );
   function selectOfficeAgent(id:string){setDivision(TEAM_WORKSPACE.teams.find(item=>item.id===id)!.divisionId);setOfficeSelection(id);setTeam(id);setFilter('all');setQuery('');}
+  useEffect(()=>{
+    try{localStorage.setItem(presenceKey,JSON.stringify(agentPresence));}catch{}
+  },[agentPresence]);
   function updateAgentPresence(id:string,mode:AgentPresence){
-    setAgentPresence(previous=>{
-      const next={...previous,[id]:mode};
-      try{localStorage.setItem(presenceKey,JSON.stringify(next));}catch{}
-      return next;
-    });
+    setAgentPresence(previous=>({...previous,[id]:mode}));
   }
   const divisionTeams=TEAM_WORKSPACE.teams.filter(item=>item.divisionId===division);
   const activity=(id:string)=>({running:language==='id'?'Worker sedang bekerja':'Worker running',queued:language==='id'?'Tugas antre':'Queued',dispatched:language==='id'?'Menunggu worker':'Waiting for worker',dispatching:language==='id'?'Menghubungkan':'Connecting',review_ready:language==='id'?'Hasil siap ditinjau':'Ready for review',failed:language==='id'?'Perlu perbaikan':'Needs attention',idle:language==='id'?'Tidak ada tugas aktif':'No active job'} as Record<string,string>)[jobStatuses[id]] || (language==='id'?'Status worker belum tersedia':'Worker status unavailable');
-  const presence=(id:string)=>agentPresence[id]||'resting';
-  const presenceLabel=(id:string)=>presence(id)==='resting'?(language==='id'?'Istirahat':'Resting'):(language==='id'?'Siap bekerja':'Ready for work');
+  const presenceLabel=(id:string)=>{
+    const mode=officePresence(agentPresence[id],jobStatuses[id]);
+    return (language==='id'
+      ?{working:'Bekerja',waiting:'Menunggu worker',resting:'Istirahat',available:'Siap bekerja'}
+      :{working:'Working',waiting:'Waiting for worker',resting:'Resting',available:'Ready for work'})[mode];
+  };
   const selectedAgent=TEAM_WORKSPACE.teams.find(item=>item.id===officeSelection)!;
   const selectedTasks=TEAM_WORKSPACE.tasks.filter(task=>task.teamId===officeSelection);
   return <div className="team-workspace" lang={language}>

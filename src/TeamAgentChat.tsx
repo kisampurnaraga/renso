@@ -1,3 +1,4 @@
+import { presenceCommand } from '../shared/office-presence.mjs';
 import { useEffect, useRef, useState } from 'react';
 import { TEAM_WORKSPACE } from './team-workspace-data';
 import { TEAM_TARGETS } from '../shared/team-roles.mjs';
@@ -11,12 +12,6 @@ type Brief={text:string;updatedAt:string};
 const key='renso:v1:team-targets';
 function readBriefs():Record<string,Brief>{
   try{const data=JSON.parse(localStorage.getItem(key)||'{}');if(!data||typeof data!=='object'||Array.isArray(data))return {};return Object.fromEntries(TEAM_WORKSPACE.teams.filter(team=>typeof data[team.id]?.text==='string'&&typeof data[team.id]?.updatedAt==='string').map(team=>[team.id,{text:data[team.id].text.slice(0,1000),updatedAt:data[team.id].updatedAt}]));}catch{return {};}
-}
-function presenceCommand(text:string):PresenceMode|null{
-  const normalized=text.toLocaleLowerCase().replace(/[.!?]+/g,' ').replace(/\s+/g,' ').trim();
-  if(/\b(lanjut kerja|kembali bekerja|mulai kerja|kerja lagi|aktif lagi|resume|back to work|continue working)\b/.test(normalized))return 'available';
-  if(/\b(istirahat|rehat|break|rest)\b/.test(normalized))return 'resting';
-  return null;
 }
 export default function TeamAgentChat({teamId,language,onActivity,onPresenceChange}:Props){
   const [briefs,setBriefs]=useState(readBriefs);

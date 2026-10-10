@@ -1,3 +1,4 @@
+import { officePresence } from '../shared/office-presence.mjs';
 import { Component, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -95,10 +96,10 @@ function OfficeScene(props:Props) {
       const z=-depth/2+1.3+Math.floor(index/columns)*3.1;
       const selected=props.selected===team.id;
       const status=props.jobStatuses?.[team.id] || 'unknown';
-      const presence=props.agentPresence?.[team.id] || 'resting';
-      const working=status==='running';
-      const waiting=['queued','dispatching','dispatched'].includes(status);
-      const resting=presence==='resting'&&!working&&!waiting;
+      const presence=officePresence(props.agentPresence?.[team.id],status);
+      const working=presence==='working';
+      const waiting=presence==='waiting';
+      const resting=presence==='resting';
       const color=outfits[index%outfits.length];
       const metadata=team as typeof team & {agentName?:string};
       const name=metadata.agentName || team.name[props.language];
